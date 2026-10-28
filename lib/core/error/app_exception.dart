@@ -1,0 +1,35 @@
+/// アプリ共通の例外（基本設計書 7.3）。
+///
+/// data レイヤーで外部ライブラリの例外をこの型に変換し、
+/// 上位レイヤーは Supabase などの型に依存しない。
+sealed class AppException implements Exception {
+  const AppException(this.message, {this.cause});
+
+  /// 画面に表示してよいメッセージ
+  final String message;
+
+  /// 元の例外（ログ用）
+  final Object? cause;
+
+  @override
+  String toString() => '$runtimeType: $message${cause != null ? ' ($cause)' : ''}';
+}
+
+class NetworkException extends AppException {
+  const NetworkException({Object? cause})
+      : super('通信に失敗しました。通信環境を確認して再試行してください。', cause: cause);
+}
+
+class UnauthorizedException extends AppException {
+  const UnauthorizedException({String? message, Object? cause})
+      : super(message ?? 'ログインの有効期限が切れました。再度ログインしてください。', cause: cause);
+}
+
+class ValidationException extends AppException {
+  const ValidationException(super.message, {super.cause});
+}
+
+class UnknownException extends AppException {
+  const UnknownException({Object? cause})
+      : super('予期しないエラーが発生しました。', cause: cause);
+}

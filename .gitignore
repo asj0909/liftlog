@@ -1,0 +1,19 @@
+# 環境変数（秘密情報）
+env/*.json
+!env/*.example.json
+
+# Flutter / Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+build/
+coverage/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Supabase ローカル
+supabase/.branches
+supabase/.temp
