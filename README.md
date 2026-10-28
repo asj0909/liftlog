@@ -27,6 +27,20 @@ bash tool/setup.sh
 flutter run -d chrome --dart-define-from-file=env/dev.json
 ```
 
+## GitHub Codespaces で開発する場合
+
+ローカルに Flutter を入れられない環境（古い Mac など）向け。
+
+1. GitHub のリポジトリ画面で **Code → Codespaces → Create codespace on main**
+2. 初回は Flutter の取得と `tool/setup.sh` が自動で走る（数分）
+3. Supabase はクラウド版を使う。`env/dev.json` に Project URL と anon key を設定
+4. 起動（Chrome がないため Web サーバーとして起動し、転送されたポートをブラウザで開く）
+
+```bash
+flutter run -d web-server --web-port=8080 --web-hostname=0.0.0.0 \
+  --dart-define-from-file=env/dev.json
+```
+
 ## テスト
 
 ```bash
