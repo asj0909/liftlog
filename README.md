@@ -41,6 +41,15 @@ flutter run -d web-server --web-port=8080 --web-hostname=0.0.0.0 \
   --dart-define-from-file=env/dev.json
 ```
 
+### Codespaces で APK をビルドして実機で確認する
+
+Codespaces ではエミュレーターが動かないため、APK を作って実機にインストールする。
+
+```bash
+bash tool/setup-android-sdk.sh                              # 初回のみ（約 10 分）
+flutter build apk --dart-define-from-file=env/dev.json      # build/app/outputs/flutter-apk/app-release.apk
+```
+
 ## テスト
 
 ```bash
