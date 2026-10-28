@@ -145,6 +145,17 @@ create trigger sets_check_owner
   for each row execute function public.check_set_owner();
 
 -- ============================================================
+-- テーブル権限
+-- 「新しいテーブルを自動で API に公開」設定に依存しないよう明示的に付与する。
+-- 未ログイン（anon）には一切付与しない。行単位の制御は下の RLS で行う。
+-- ============================================================
+revoke all on public.exercises, public.workouts, public.workout_exercises, public.sets
+  from anon;
+grant select, insert, update, delete
+  on public.exercises, public.workouts, public.workout_exercises, public.sets
+  to authenticated;
+
+-- ============================================================
 -- RLS（基本設計書 5.3）
 -- ============================================================
 alter table public.exercises         enable row level security;
