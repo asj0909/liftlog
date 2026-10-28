@@ -28,7 +28,7 @@ export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
 
 echo "==> SDK パッケージ（ライセンスに同意して導入）"
 yes | sdkmanager --licenses >/dev/null || true
-sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
 
 echo "==> Flutter に SDK の場所を設定"
 flutter config --android-sdk "$ANDROID_HOME" >/dev/null
@@ -47,3 +47,10 @@ fi
 flutter doctor
 echo
 echo "完了。APK のビルド: flutter build apk --dart-define-from-file=env/dev.json"
+
+# Codespaces（標準 8GB メモリ）では Flutter テンプレートの Gradle 設定（-Xmx8G）だと
+# メモリ不足でデーモンが強制終了されるため、ヒープを抑える
+if [ -f android/gradle.properties ]; then
+  sed -i -E 's/-Xmx[0-9]+[GgMm]/-Xmx3g/; s/-XX:MaxMetaspaceSize=[0-9]+[GgMm]/-XX:MaxMetaspaceSize=1g/' android/gradle.properties
+  grep -q '^kotlin.daemon.jvmargs' android/gradle.properties || echo 'kotlin.daemon.jvmargs=-Xmx1g' >> android/gradle.properties
+fi
