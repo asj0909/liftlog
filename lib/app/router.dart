@@ -13,6 +13,7 @@ import '../features/settings/presentation/settings_page.dart';
 import '../features/workout/presentation/calendar_page.dart';
 import '../features/workout/presentation/exercise_picker_page.dart';
 import '../features/workout/presentation/home_page.dart';
+import '../features/workout/presentation/new_workout_page.dart';
 import '../features/workout/presentation/workout_page.dart';
 
 /// ルートのパス定義（基本設計書 6.2）。
@@ -92,7 +93,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.newWorkout,
-        builder: (context, state) => WorkoutPage.create(
+        builder: (context, state) => NewWorkoutPage(
           date: state.uri.queryParameters['date'],
         ),
       ),
@@ -103,8 +104,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         routes: [
           GoRoute(
             path: 'pick-exercise',
-            builder: (context, state) =>
-                ExercisePickerPage(workoutId: state.pathParameters['id']!),
+            builder: (context, state) => const ExercisePickerPage(),
           ),
         ],
       ),

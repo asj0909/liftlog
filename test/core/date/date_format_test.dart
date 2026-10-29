@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:liftlog/features/workout/presentation/date_format.dart';
+import 'package:liftlog/core/date/date_format.dart';
 
 void main() {
   test('formatYmd はゼロ埋めした yyyy-MM-dd', () {
@@ -15,5 +15,18 @@ void main() {
     expect(parseYmd('2026/10/28'), isNull);
     expect(parseYmd('2026-02-30'), isNull);
     expect(parseYmd('2026-13-01'), isNull);
+  });
+
+  test('dateOnly は時刻を切り捨てる', () {
+    expect(dateOnly(DateTime(2026, 10, 29, 23, 59)), DateTime(2026, 10, 29));
+  });
+
+  test('formatJpDate は「10月29日（木）」の形', () {
+    expect(formatJpDate(DateTime(2026, 10, 29)), '10月29日（木）');
+    expect(formatJpDate(DateTime(2026, 11, 1)), '11月1日（日）');
+  });
+
+  test('formatShortDate は「10/29」の形', () {
+    expect(formatShortDate(DateTime(2026, 10, 29)), '10/29');
   });
 }

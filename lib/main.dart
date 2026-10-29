@@ -9,35 +9,49 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   if (!Env.isConfigured) {
-    runApp(const _MissingEnvApp());
+    runApp(
+      const _StartupMessageApp(
+        'SUPABASE_URL / SUPABASE_ANON_KEY が未設定です。\n'
+        'flutter run --dart-define-from-file=env/dev.json で起動してください。',
+      ),
+    );
     return;
   }
 
-  await Supabase.initialize(
-    url: Env.supabaseUrl,
-    // anonKey は非推奨になったため publishableKey を使う（値は同じ公開用キー）
-    publishableKey: Env.supabaseAnonKey,
-  );
+  try {
+    await Supabase.initialize(
+      url: Env.supabaseUrl,
+      // anonKey は非推奨になったため publishableKey を使う（値は同じ公開用キー）
+      publishableKey: Env.supabaseAnonKey,
+    );
+  } catch (e, stackTrace) {
+    // 初期化に失敗するとスプラッシュのまま止まるので、案内画面を出す（基本設計書 7.3）
+    debugPrint('Supabase の初期化に失敗: $e\n$stackTrace');
+    runApp(
+      const _StartupMessageApp(
+        '起動に失敗しました。\n通信環境を確認して、アプリを再起動してください。',
+      ),
+    );
+    return;
+  }
 
   runApp(const ProviderScope(child: LiftLogApp()));
 }
 
-/// 環境変数が未設定のときに起動方法を案内する画面。
-class _MissingEnvApp extends StatelessWidget {
-  const _MissingEnvApp();
+/// 起動できないときに理由を表示するだけの画面。
+class _StartupMessageApp extends StatelessWidget {
+  const _StartupMessageApp(this.message);
+
+  final String message;
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
       home: Scaffold(
         body: Center(
           child: Padding(
-            padding: EdgeInsets.all(24),
-            child: Text(
-              'SUPABASE_URL / SUPABASE_ANON_KEY が未設定です。\n'
-              'flutter run --dart-define-from-file=env/dev.json で起動してください。',
-              textAlign: TextAlign.center,
-            ),
+            padding: const EdgeInsets.all(24),
+            child: Text(message, textAlign: TextAlign.center),
           ),
         ),
       ),

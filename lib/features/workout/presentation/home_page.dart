@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/router.dart';
+import '../../../core/date/date_format.dart';
 import '../../../core/widgets/placeholder_body.dart';
-import 'date_format.dart';
 
 /// S-02 ホーム（履歴一覧）。
 class HomePage extends StatelessWidget {

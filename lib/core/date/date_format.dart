@@ -1,3 +1,6 @@
+// 日付の変換（URL・DB 用の yyyy-MM-dd と画面表示用）。
+// intl の日本語ロケール初期化に依存しないよう自前で実装している。
+
 /// URL・DB 用の日付文字列（yyyy-MM-dd）。
 String formatYmd(DateTime date) {
   String two(int n) => n.toString().padLeft(2, '0');
@@ -17,3 +20,16 @@ DateTime? parseYmd(String? value) {
   if (date.year != year || date.month != month || date.day != day) return null;
   return date;
 }
+
+/// 時刻を切り捨てた日付。
+DateTime dateOnly(DateTime dateTime) =>
+    DateTime(dateTime.year, dateTime.month, dateTime.day);
+
+const _weekdays = ['月', '火', '水', '木', '金', '土', '日'];
+
+/// 画面表示用：10月29日（木）
+String formatJpDate(DateTime date) =>
+    '${date.month}月${date.day}日（${_weekdays[date.weekday - 1]}）';
+
+/// 画面表示用（短い形）：10/29
+String formatShortDate(DateTime date) => '${date.month}/${date.day}';
