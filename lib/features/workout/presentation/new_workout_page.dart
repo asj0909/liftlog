@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/router.dart';
 import '../../../core/date/date_format.dart';
 import '../../../core/error/app_exception.dart';
+import '../../../core/widgets/error_snack_bar.dart';
 import '../application/workout_providers.dart';
 
 /// `/workouts/new?date=yyyy-MM-dd`
@@ -58,6 +59,7 @@ class _NewWorkoutPageState extends ConsumerState<NewWorkoutPage> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(error.message, textAlign: TextAlign.center),
+                  ErrorDetailText(error),
                   const SizedBox(height: 12),
                   OutlinedButton(onPressed: _retry, child: const Text('再試行')),
                 ],

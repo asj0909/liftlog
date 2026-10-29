@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'app_exception.dart';
@@ -12,6 +13,8 @@ Future<T> guardSupabase<T>(Future<T> Function() action) async {
   } on AppException {
     rethrow;
   } on PostgrestException catch (e) {
+    debugPrint('[Supabase] code=${e.code} message=${e.message} '
+        'details=${e.details} hint=${e.hint}');
     throw mapPostgrestException(e);
   } on AuthException catch (e) {
     throw UnauthorizedException(cause: e);
