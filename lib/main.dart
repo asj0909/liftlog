@@ -15,7 +15,8 @@ Future<void> main() async {
 
   await Supabase.initialize(
     url: Env.supabaseUrl,
-    anonKey: Env.supabaseAnonKey,
+    // anonKey は非推奨になったため publishableKey を使う（値は同じ公開用キー）
+    publishableKey: Env.supabaseAnonKey,
   );
 
   runApp(const ProviderScope(child: LiftLogApp()));

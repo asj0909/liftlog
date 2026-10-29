@@ -16,13 +16,13 @@ sealed class AppException implements Exception {
 }
 
 class NetworkException extends AppException {
-  const NetworkException({Object? cause})
-      : super('通信に失敗しました。通信環境を確認して再試行してください。', cause: cause);
+  const NetworkException({super.cause})
+      : super('通信に失敗しました。通信環境を確認して再試行してください。');
 }
 
 class UnauthorizedException extends AppException {
-  const UnauthorizedException({String? message, Object? cause})
-      : super(message ?? 'ログインの有効期限が切れました。再度ログインしてください。', cause: cause);
+  const UnauthorizedException({String? message, super.cause})
+      : super(message ?? 'ログインの有効期限が切れました。再度ログインしてください。');
 }
 
 class ValidationException extends AppException {
@@ -30,6 +30,6 @@ class ValidationException extends AppException {
 }
 
 class UnknownException extends AppException {
-  const UnknownException({Object? cause})
-      : super('予期しないエラーが発生しました。', cause: cause);
+  const UnknownException({super.cause})
+      : super('予期しないエラーが発生しました。');
 }
