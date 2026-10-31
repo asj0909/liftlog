@@ -25,6 +25,12 @@ class UnauthorizedException extends AppException {
       : super(message ?? 'ログインの有効期限が切れました。再度ログインしてください。');
 }
 
+/// ログインはしているが、その操作の権限がない（テーブル権限・RLS・所有者チェック）
+class ForbiddenException extends AppException {
+  const ForbiddenException({super.cause})
+      : super('この操作を行う権限がありません。');
+}
+
 class ValidationException extends AppException {
   const ValidationException(super.message, {super.cause});
 }
