@@ -3,6 +3,7 @@
 ## 概要
 Flutter（Android / iOS / Web）＋ Supabase の筋トレ記録アプリ。
 仕様は docs/01_要件定義書.md、設計は docs/02_基本設計書.md を正とする。
+進捗・既知の課題・細かい決定事項は docs/PROGRESS.md を参照し、機能を終えたら更新する。
 
 ## コマンド
 - 解析：`flutter analyze`
