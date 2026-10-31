@@ -1,6 +1,7 @@
 import '../../exercise/domain/exercise.dart';
 import 'workout.dart';
 import 'workout_set.dart';
+import 'workout_summary.dart';
 
 /// ワークアウト記録（F-03〜F-05）。失敗時は AppException を投げる。
 abstract interface class WorkoutRepository {
@@ -8,6 +9,9 @@ abstract interface class WorkoutRepository {
   Future<String> findOrCreateByDate(DateTime date);
 
   Future<WorkoutDetail> fetchDetail(String workoutId);
+
+  /// 自分のワークアウトの一覧（S-02）。種目が 0 件のものも含む。
+  Future<List<WorkoutSummary>> fetchSummaries();
 
   Future<WorkoutEntry> addEntry({
     required String workoutId,

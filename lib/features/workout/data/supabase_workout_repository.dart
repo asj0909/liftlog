@@ -7,6 +7,7 @@ import '../../exercise/domain/exercise.dart';
 import '../domain/workout.dart';
 import '../domain/workout_repository.dart';
 import '../domain/workout_set.dart';
+import '../domain/workout_summary.dart';
 
 class SupabaseWorkoutRepository implements WorkoutRepository {
   SupabaseWorkoutRepository(this._client);
@@ -50,6 +51,20 @@ class SupabaseWorkoutRepository implements WorkoutRepository {
             .eq('id', workoutId)
             .single();
         return _detailFromRow(row);
+      });
+
+  @override
+  Future<List<WorkoutSummary>> fetchSummaries() => guardSupabase(() async {
+        // 種目名まで 1 回の問い合わせで取得する（セットは取らない）
+        final rows = await _client
+            .from('workouts')
+            .select(
+              'id, performed_on, '
+              'workout_exercises(sort_order, exercise:exercises(name))',
+            )
+            .order('performed_on', ascending: false)
+            .order('created_at', ascending: false);
+        return rows.map(_summaryFromRow).toList();
       });
 
   @override
@@ -143,6 +158,24 @@ class SupabaseWorkoutRepository implements WorkoutRepository {
       performedOn: _parseDate(row['performed_on']),
       memo: row['memo'] as String?,
       entries: entries,
+    );
+  }
+
+  static WorkoutSummary _summaryFromRow(Map<String, dynamic> row) {
+    final entries = (row['workout_exercises'] as List<dynamic>)
+        .cast<Map<String, dynamic>>()
+        .toList()
+      ..sort(
+        (a, b) => (a['sort_order'] as int).compareTo(b['sort_order'] as int),
+      );
+
+    return WorkoutSummary(
+      id: row['id'] as String,
+      performedOn: _parseDate(row['performed_on']),
+      exerciseNames: [
+        for (final e in entries)
+          (e['exercise'] as Map<String, dynamic>)['name'] as String,
+      ],
     );
   }
 

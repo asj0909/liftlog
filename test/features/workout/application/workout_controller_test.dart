@@ -152,4 +152,45 @@ void main() {
       expect(setsOf('we1'), [firstSet]);
     });
   });
+
+  group('履歴一覧の再読み込み', () {
+    setUp(() async {
+      container.listen(workoutHistoryProvider, (previous, next) {});
+      await container.read(workoutHistoryProvider.future);
+    });
+
+    Future<void> settleHistory() =>
+        container.read(workoutHistoryProvider.future);
+
+    test('種目・セットの保存に成功するたびに読み直す', () async {
+      expect(repo.fetchSummariesCount, 1);
+
+      await controller().addExercise(latPulldown);
+      await settleHistory();
+      expect(repo.fetchSummariesCount, 2);
+
+      await controller().addSet('we1');
+      await settleHistory();
+      expect(repo.fetchSummariesCount, 3);
+
+      await controller().updateSet('we1', firstSet.copyWith(reps: 8));
+      await settleHistory();
+      expect(repo.fetchSummariesCount, 4);
+
+      await controller().deleteSet('we1', 's1');
+      await settleHistory();
+      expect(repo.fetchSummariesCount, 5);
+    });
+
+    test('保存に失敗したときは読み直さない', () async {
+      repo.nextError = const NetworkException();
+
+      await expectLater(
+        controller().addSet('we1'),
+        throwsA(isA<NetworkException>()),
+      );
+      await settleHistory();
+      expect(repo.fetchSummariesCount, 1);
+    });
+  });
 }
