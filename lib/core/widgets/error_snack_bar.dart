@@ -10,6 +10,18 @@ String? debugDetailOf(Object error) {
   return cause?.toString();
 }
 
+/// スナックバー用の文言。debug ビルドでは原因（元の例外）を下に付ける。
+String snackBarMessageOf(AppException error) {
+  final detail = debugDetailOf(error);
+  return detail == null ? error.message : '${error.message}\n\n$detail';
+}
+
+/// 原因付きのときは読めるように長めに表示する
+Duration snackBarDurationOf(AppException error) =>
+    debugDetailOf(error) == null
+        ? const Duration(seconds: 4)
+        : const Duration(seconds: 15);
+
 /// エラー文言の下に、debug ビルドでだけ原因を小さく表示する
 class ErrorDetailText extends StatelessWidget {
   const ErrorDetailText(this.error, {super.key});
@@ -44,7 +56,12 @@ Future<void> runWithErrorSnackBar(
   } on AppException catch (e) {
     messenger
       ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(e.message)));
+      ..showSnackBar(
+        SnackBar(
+          content: Text(snackBarMessageOf(e)),
+          duration: snackBarDurationOf(e),
+        ),
+      );
   }
 }
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/app_exception.dart';
+import '../../../core/widgets/error_snack_bar.dart';
 import '../application/auth_providers.dart';
 import '../domain/credentials_validator.dart';
 
@@ -36,17 +37,20 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       await action();
       if (successMessage != null) _showMessage(successMessage);
     } on AppException catch (e) {
-      _showMessage(e.message);
+      _showMessage(snackBarMessageOf(e), duration: snackBarDurationOf(e));
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
   }
 
-  void _showMessage(String message) {
+  void _showMessage(
+    String message, {
+    Duration duration = const Duration(seconds: 4),
+  }) {
     if (!mounted) return;
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
+      ..showSnackBar(SnackBar(content: Text(message), duration: duration));
   }
 
   Future<void> _signIn() async {

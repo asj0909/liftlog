@@ -76,4 +76,21 @@ void main() {
     expect(find.text('メールアドレスまたはパスワードが違います'), findsOneWidget);
     expect(repo.currentUser, isNull);
   });
+
+  testWidgets('debug ビルドでは通信エラーの原因もスナックバーに表示する', (tester) async {
+    repo.nextError = NetworkException(cause: Exception('SocketException: テスト用の原因'));
+    await pumpLoginPage(tester);
+    await enterCredentials(
+      tester,
+      email: 'user@example.com',
+      password: 'password123',
+    );
+
+    await tester.tap(find.byKey(const Key('login_submit')));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.textContaining('通信に失敗しました'), findsOneWidget);
+    expect(find.textContaining('SocketException: テスト用の原因'), findsOneWidget);
+  });
 }
