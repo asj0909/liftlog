@@ -3,11 +3,14 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:liftlog/core/error/app_exception.dart';
+import 'package:liftlog/features/progress/application/progress_providers.dart';
+import 'package:liftlog/features/progress/domain/progress_point.dart';
 import 'package:liftlog/features/workout/application/workout_controller.dart';
 import 'package:liftlog/features/workout/application/workout_providers.dart';
 import 'package:liftlog/features/workout/domain/workout.dart';
 import 'package:liftlog/features/workout/domain/workout_set.dart';
 
+import '../../../helpers/fake_progress_repository.dart';
 import '../../../helpers/fake_workout_repository.dart';
 import '../../../helpers/test_data.dart';
 
@@ -16,6 +19,7 @@ void main() {
   const firstSet = WorkoutSet(id: 's1', sortOrder: 0, weightKg: 60, reps: 10);
 
   late FakeWorkoutRepository repo;
+  late FakeProgressRepository progressRepo;
   late ProviderContainer container;
 
   setUp(() async {
@@ -27,8 +31,12 @@ void main() {
           WorkoutEntry(id: 'we1', exercise: bench, sortOrder: 0, sets: [firstSet]),
         ],
       );
+    progressRepo = FakeProgressRepository();
     container = ProviderContainer(
-      overrides: [workoutRepositoryProvider.overrideWithValue(repo)],
+      overrides: [
+        workoutRepositoryProvider.overrideWithValue(repo),
+        progressRepositoryProvider.overrideWithValue(progressRepo),
+      ],
     );
     addTearDown(container.dispose);
 
@@ -192,5 +200,17 @@ void main() {
       await settleHistory();
       expect(repo.fetchSummariesCount, 1);
     });
+  });
+
+  test('セットの保存に成功したら推移グラフも読み直す', () async {
+    const key = (exerciseId: 'e-bench', range: ProgressRange.all);
+    container.listen(exerciseProgressProvider(key), (previous, next) {});
+    await container.read(exerciseProgressProvider(key).future);
+    expect(progressRepo.fetchCount, 1);
+
+    await controller().updateSet('we1', firstSet.copyWith(reps: 8));
+    await container.read(exerciseProgressProvider(key).future);
+
+    expect(progressRepo.fetchCount, 2);
   });
 }
