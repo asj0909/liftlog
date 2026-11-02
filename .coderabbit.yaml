@@ -1,0 +1,43 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+# CodeRabbit の設定。プロジェクトのルールは CLAUDE.md（自動で読み込まれる）を正とする。
+# 公開リポジトリでスターが 10 未満のあいだは、PR に「@coderabbitai review」とコメントしてレビューを依頼する。
+
+# レビューコメントの言語
+language: ko-KR
+
+reviews:
+  profile: chill
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  auto_review:
+    enabled: true
+    drafts: false
+  path_filters:
+    - "!pubspec.lock"
+    - "!android/**"
+    - "!ios/**"
+    - "!web/**"
+  path_instructions:
+    - path: "lib/features/*/domain/**"
+      instructions: |
+        domain は純粋な Dart。flutter・supabase_flutter など外部パッケージの import があれば指摘する。
+    - path: "lib/features/*/data/**"
+      instructions: |
+        Supabase の例外は guardSupabase などで AppException に変換されているか確認する。
+        numeric 列を int / double で直接キャストしていないか（num で受けているか）確認する。
+    - path: "lib/**/presentation/**"
+      instructions: |
+        画面幅は WindowSize.fromWidth で判定し、600 / 1024 などの数値を直書きしていないか確認する。
+        await の後に context を使う箇所では mounted の確認があるか見る。
+    - path: "supabase/migrations/**"
+      instructions: |
+        既存のマイグレーションファイルを編集していないか（新規ファイルの追加のみ可）。
+        新しいテーブルに RLS・user_id・所有者チェック・GRANT があるか、pgTAP テストが追加されているか確認する。
+        関数は SECURITY INVOKER と search_path の固定になっているか確認する。
+    - path: "test/**"
+      instructions: |
+        Supabase に実際に接続せず、Provider の override でフェイクに差し替えているか確認する。
+
+chat:
+  auto_reply: true
