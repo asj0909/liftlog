@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:liftlog/core/date/today_provider.dart';
 import 'package:liftlog/core/error/app_exception.dart';
 import 'package:liftlog/features/exercise/application/exercise_providers.dart';
 import 'package:liftlog/features/progress/application/progress_providers.dart';

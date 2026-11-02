@@ -50,3 +50,21 @@ bool _listEquals<T>(List<T> a, List<T> b) {
   }
   return true;
 }
+
+/// カレンダー（S-03）用：実施日ごとのワークアウト。
+///
+/// 種目が 0 件のものは除く（[historyOf] と同じ基準）。キーは時刻なしの日付。
+Map<DateTime, List<WorkoutSummary>> workoutsByDate(
+  List<WorkoutSummary> summaries,
+) {
+  final result = <DateTime, List<WorkoutSummary>>{};
+  for (final s in historyOf(summaries)) {
+    final day = DateTime(
+      s.performedOn.year,
+      s.performedOn.month,
+      s.performedOn.day,
+    );
+    (result[day] ??= []).add(s);
+  }
+  return result;
+}

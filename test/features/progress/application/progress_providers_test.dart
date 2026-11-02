@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:liftlog/core/date/today_provider.dart';
 import 'package:liftlog/features/progress/application/progress_providers.dart';
 import 'package:liftlog/features/progress/domain/progress_point.dart';
 

@@ -43,4 +43,35 @@ void main() {
       expect(historyOf(const []), isEmpty);
     });
   });
+
+  group('workoutsByDate', () {
+    test('実施日ごとにまとめ、種目が 0 件のものは除く', () {
+      final morning = WorkoutSummary(
+        id: 'w-a',
+        performedOn: DateTime(2026, 10, 29),
+        exerciseNames: const ['ベンチプレス'],
+      );
+      final evening = WorkoutSummary(
+        id: 'w-b',
+        performedOn: DateTime(2026, 10, 29),
+        exerciseNames: const ['スクワット'],
+      );
+      final empty =
+          WorkoutSummary(id: 'w30', performedOn: DateTime(2026, 10, 30));
+      final oct31 = WorkoutSummary(
+        id: 'w31',
+        performedOn: DateTime(2026, 10, 31),
+        exerciseNames: const ['デッドリフト'],
+      );
+
+      expect(workoutsByDate([morning, empty, oct31, evening]), {
+        DateTime(2026, 10, 29): [morning, evening],
+        DateTime(2026, 10, 31): [oct31],
+      });
+    });
+
+    test('記録がなければ空', () {
+      expect(workoutsByDate(const []), isEmpty);
+    });
+  });
 }
