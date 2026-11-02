@@ -3,7 +3,7 @@
 # 公開リポジトリでスターが 10 未満のあいだは、PR に「@coderabbitai review」とコメントしてレビューを依頼する。
 
 # レビューコメントの言語
-language: ko-KR
+language: ja-JP
 
 reviews:
   profile: chill
@@ -13,11 +13,17 @@ reviews:
   auto_review:
     enabled: true
     drafts: false
+  # android / ios / web は AndroidManifest.xml・build.gradle.kts・Info.plist・index.html などを
+  # 手で管理しているのでレビュー対象に残し、アイコン画像と Xcode のワークスペース情報だけ除外する
   path_filters:
     - "!pubspec.lock"
-    - "!android/**"
-    - "!ios/**"
-    - "!web/**"
+    - "!android/app/src/main/res/mipmap-*/**"
+    - "!android/app/src/main/res/drawable*/**"
+    - "!ios/Runner/Assets.xcassets/**"
+    - "!ios/**/xcshareddata/**"
+    - "!ios/Runner.xcworkspace/**"
+    - "!web/icons/**"
+    - "!web/favicon.png"
   path_instructions:
     - path: "lib/features/*/domain/**"
       instructions: |
