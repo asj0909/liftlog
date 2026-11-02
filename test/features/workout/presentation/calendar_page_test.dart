@@ -7,6 +7,7 @@ import 'package:liftlog/core/error/app_exception.dart';
 import 'package:liftlog/features/workout/application/workout_providers.dart';
 import 'package:liftlog/features/workout/domain/workout_summary.dart';
 import 'package:liftlog/features/workout/presentation/calendar_page.dart';
+import 'package:table_calendar/table_calendar.dart';
 
 import '../../../helpers/fake_workout_repository.dart';
 
@@ -132,6 +133,31 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('2026年10月'), findsOneWidget);
+  });
+
+  testWidgets('10 年より前の記録があれば、その日まで戻れる', (tester) async {
+    DateTime firstDay() => tester
+        .widget<TableCalendar<WorkoutSummary>>(
+          find.byType(TableCalendar<WorkoutSummary>),
+        )
+        .firstDay;
+
+    await pumpPage(tester);
+    expect(firstDay(), DateTime.utc(2016));
+
+    repo.summaries = [
+      ...repo.summaries,
+      WorkoutSummary(
+        id: 'w-old',
+        performedOn: DateTime(2014, 5, 3),
+        exerciseNames: const ['ベンチプレス'],
+      ),
+    ];
+    ProviderScope.containerOf(tester.element(find.byType(CalendarPage)))
+        .invalidate(workoutHistoryProvider);
+    await tester.pumpAndSettle();
+
+    expect(firstDay(), DateTime.utc(2014, 5, 3));
   });
 
   testWidgets('広い画面ではカレンダーの右にその日の記録を並べる', (tester) async {

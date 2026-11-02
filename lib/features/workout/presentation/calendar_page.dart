@@ -98,6 +98,17 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
 
 const _weekdayLabels = ['月', '火', '水', '木', '金', '土', '日'];
 
+/// カレンダーで戻れる最も古い日：10 年前の 1 月 1 日と、最も古い記録の日のうち早いほう。
+///
+/// 記録のない過去の日にも記録を作れるように、記録がなくても 10 年前までは戻れるようにする。
+DateTime _firstDayOf(Iterable<DateTime> recordedDays, DateTime today) {
+  var first = DateTime(today.year - 10);
+  for (final day in recordedDays) {
+    if (day.isBefore(first)) first = day;
+  }
+  return first;
+}
+
 class _WorkoutCalendar extends StatelessWidget {
   const _WorkoutCalendar({
     required this.today,
@@ -115,15 +126,12 @@ class _WorkoutCalendar extends StatelessWidget {
   final void Function(DateTime selected, DateTime focused) onDaySelected;
   final ValueChanged<DateTime> onPageChanged;
 
-  /// 選べる最も古い日。これより前の記録は想定しない
-  static final _firstDay = DateTime(2020);
-
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     return TableCalendar<WorkoutSummary>(
       // 未来の日は選べない（lastDay より後は自動で無効になる）
-      firstDay: _firstDay,
+      firstDay: _firstDayOf(byDate.keys, today),
       lastDay: today,
       currentDay: today,
       focusedDay: focusedDay,
