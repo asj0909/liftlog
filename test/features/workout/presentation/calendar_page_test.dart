@@ -35,9 +35,6 @@ void main() {
       ];
   });
 
-  String location() =>
-      router.routerDelegate.currentConfiguration.uri.toString();
-
   Future<void> pumpPage(
     WidgetTester tester, {
     Size size = const Size(400, 900),
@@ -56,7 +53,8 @@ void main() {
         ),
         GoRoute(
           path: '/workouts/new',
-          builder: (context, state) => const Scaffold(body: Text('new')),
+          builder: (context, state) =>
+              Scaffold(body: Text('new ${state.uri.queryParameters['date']}')),
         ),
         GoRoute(
           path: '/workouts/:id',
@@ -99,7 +97,7 @@ void main() {
     await tester.tap(find.text('この日の記録を作成'));
     await tester.pumpAndSettle();
 
-    expect(location(), '/workouts/new?date=2026-11-20');
+    expect(find.text('new 2026-11-20'), findsOneWidget);
   });
 
   testWidgets('実施日を選ぶとその日の種目を表示し、タップで記録画面を開く', (tester) async {
@@ -115,7 +113,7 @@ void main() {
     await tester.tap(find.text('スクワット、レッグプレス'));
     await tester.pumpAndSettle();
 
-    expect(location(), '/workouts/w10');
+    expect(find.text('workout w10'), findsOneWidget);
   });
 
   testWidgets('未来の日は選べない', (tester) async {
