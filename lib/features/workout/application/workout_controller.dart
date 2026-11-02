@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/app_exception.dart';
 import '../../exercise/domain/exercise.dart';
+import '../../progress/application/progress_providers.dart';
 import '../domain/set_defaults.dart';
 import '../domain/set_input_validator.dart';
 import '../domain/workout.dart';
@@ -17,7 +18,7 @@ final workoutControllerProvider = AsyncNotifierProvider.autoDispose
 ///
 /// セットの追加・変更・削除は楽観的更新（基本設計書 7.2）：
 /// 先に画面へ反映し、保存に失敗したら元に戻して AppException を投げる。
-/// 保存に成功したら履歴一覧を invalidate し、ホームに戻ったときに最新の内容を出す。
+/// 保存に成功したら履歴一覧と推移グラフを invalidate し、戻ったときに最新の内容を出す。
 class WorkoutController extends AsyncNotifier<WorkoutDetail> {
   WorkoutController(this.workoutId);
 
@@ -41,7 +42,7 @@ class WorkoutController extends AsyncNotifier<WorkoutDetail> {
     );
     if (!ref.mounted) return;
     state = AsyncData(_current.addEntry(entry));
-    _invalidateHistory();
+    _invalidateReadModels();
   }
 
   /// セットを 1 つ追加する。初期値は直前のセット、なければ前回記録から。
@@ -64,7 +65,7 @@ class WorkoutController extends AsyncNotifier<WorkoutDetail> {
         entryId,
         (sets) => [for (final s in sets) identical(s, draft) ? saved : s],
       );
-      _invalidateHistory();
+      _invalidateReadModels();
     } on AppException {
       if (ref.mounted) {
         _updateSets(
@@ -89,7 +90,7 @@ class WorkoutController extends AsyncNotifier<WorkoutDetail> {
     _replaceSet(entryId, updated);
     try {
       await _repository.updateSet(updated);
-      if (ref.mounted) _invalidateHistory();
+      if (ref.mounted) _invalidateReadModels();
     } on AppException {
       if (ref.mounted) _replaceSet(entryId, old);
       rethrow;
@@ -102,14 +103,19 @@ class WorkoutController extends AsyncNotifier<WorkoutDetail> {
     _updateSets(entryId, (sets) => [for (final s in sets) if (s.id != setId) s]);
     try {
       await _repository.deleteSet(setId);
-      if (ref.mounted) _invalidateHistory();
+      if (ref.mounted) _invalidateReadModels();
     } on AppException {
       if (ref.mounted) _updateSets(entryId, (_) => before);
       rethrow;
     }
   }
 
-  void _invalidateHistory() => ref.invalidate(workoutHistoryProvider);
+  /// 記録から作られる表示（履歴一覧・推移グラフ）を読み直させる（基本設計書 7.2）
+  void _invalidateReadModels() {
+    ref
+      ..invalidate(workoutHistoryProvider)
+      ..invalidate(exerciseProgressProvider);
+  }
 
   void _replaceSet(String entryId, WorkoutSet set) => _updateSets(
         entryId,
