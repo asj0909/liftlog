@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Web を release ビルドして静的サーバーで配信する（Codespaces で debug が読み込み中のまま止まるときに使う）
-# 使い方：リポジトリのどこからでも ./tool/run_web_release.sh
+# 使い方：リポジトリのルートで ./tool/run_web_release.sh（スクリプト内でルートへ移動するので、別の場所からはパスを指定して実行できる）
+# debug（run_web_debug.sh）と同じ 8080 番を使うので、先に debug のターミナルで q を押して終了しておく
 # コードを変えたら Ctrl + C で止めて、もう一度実行する（毎回ビルドし直す）
 set -euo pipefail
 cd "$(dirname "$0")/.."

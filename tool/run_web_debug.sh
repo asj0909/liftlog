@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Web をデバッグモードで起動する（ホットリロード可：r / R、終了：q）
-# 使い方：リポジトリのどこからでも ./tool/run_web_debug.sh
+# 使い方：リポジトリのルートで ./tool/run_web_debug.sh（スクリプト内でルートへ移動するので、別の場所からはパスを指定して実行できる）
 # 起動後、Codespaces のポートタブで 8080 を新しいタブで開く（古いタブの再読み込みは 401 になることがある）
 set -euo pipefail
 cd "$(dirname "$0")/.."
