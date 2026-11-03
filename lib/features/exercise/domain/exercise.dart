@@ -35,6 +35,13 @@ class Exercise {
 
   bool get isPreset => userId == null;
 
+  Exercise copyWith({String? name, ExerciseCategory? category}) => Exercise(
+        id: id,
+        name: name ?? this.name,
+        category: category ?? this.category,
+        userId: userId,
+      );
+
   @override
   bool operator ==(Object other) =>
       other is Exercise &&
