@@ -27,25 +27,39 @@ class ExerciseManageController extends AsyncNotifier<List<Exercise>> {
     required String name,
     required ExerciseCategory category,
   }) async {
-    await _repository.create(name: name, category: category);
-    _reload();
+    await _write(() => _repository.create(name: name, category: category));
   }
 
   /// 名前・カテゴリを変更する。種目名は履歴一覧にも出るので、履歴と推移グラフも読み直す。
   Future<void> edit(Exercise exercise) async {
-    await _repository.update(exercise);
-    _reload(recordsChanged: true);
+    await _write(() => _repository.update(exercise), recordsChanged: true);
   }
 
   /// 削除する。その種目の記録も DB 側で消えるので、履歴と推移グラフも読み直す。
   Future<void> remove(String exerciseId) async {
-    await _repository.delete(exerciseId);
-    _reload(recordsChanged: true);
+    await _write(() => _repository.delete(exerciseId), recordsChanged: true);
   }
 
   /// 削除の確認に使う：その種目が使われている記録の件数
   Future<int> usageCount(String exerciseId) =>
       _repository.countUsage(exerciseId);
+
+  /// 書き込みから再読み込みの指示までの間はコントローラーを破棄させない。
+  ///
+  /// autoDispose なので、保存中に画面を閉じると破棄され、DB は変わったのに
+  /// 種目一覧・履歴の invalidate が飛ばされてしまう。それを防ぐ。
+  Future<void> _write(
+    Future<void> Function() action, {
+    bool recordsChanged = false,
+  }) async {
+    final link = ref.keepAlive();
+    try {
+      await action();
+      _reload(recordsChanged: recordsChanged);
+    } finally {
+      link.close();
+    }
+  }
 
   void _reload({bool recordsChanged = false}) {
     if (!ref.mounted) return;

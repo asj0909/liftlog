@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:liftlog/core/error/app_exception.dart';
 import 'package:liftlog/features/exercise/domain/exercise.dart';
 import 'package:liftlog/features/exercise/domain/exercise_repository.dart';
@@ -16,12 +18,17 @@ class FakeExerciseRepository implements ExerciseRepository {
   /// 次の書き込み系の呼び出しで投げる例外
   AppException? nextError;
 
+  /// 設定すると、書き込み系の呼び出しがこれの完了まで待つ（保存中の状態を確認する用）
+  Completer<void>? gate;
+
   var fetchAllCount = 0;
   final deletedIds = <String>[];
 
   var _sequence = 0;
 
-  void _throwIfNeeded() {
+  Future<void> _beforeWrite() async {
+    final gate = this.gate;
+    if (gate != null) await gate.future;
     final error = nextError;
     if (error != null) {
       nextError = null;
@@ -40,7 +47,7 @@ class FakeExerciseRepository implements ExerciseRepository {
     required String name,
     required ExerciseCategory category,
   }) async {
-    _throwIfNeeded();
+    await _beforeWrite();
     final created = Exercise(
       id: 'custom-${++_sequence}',
       name: name,
@@ -53,14 +60,14 @@ class FakeExerciseRepository implements ExerciseRepository {
 
   @override
   Future<void> update(Exercise exercise) async {
-    _throwIfNeeded();
+    await _beforeWrite();
     final i = exercises.indexWhere((e) => e.id == exercise.id);
     exercises[i] = exercise;
   }
 
   @override
   Future<void> delete(String exerciseId) async {
-    _throwIfNeeded();
+    await _beforeWrite();
     deletedIds.add(exerciseId);
     exercises.removeWhere((e) => e.id == exerciseId);
   }

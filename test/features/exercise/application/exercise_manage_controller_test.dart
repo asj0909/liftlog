@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:liftlog/core/error/app_exception.dart';
@@ -14,6 +16,7 @@ void main() {
   late FakeExerciseRepository repo;
   late FakeWorkoutRepository workoutRepo;
   late ProviderContainer container;
+  late ProviderSubscription<AsyncValue<List<Exercise>>> manageSubscription;
 
   setUp(() async {
     repo = FakeExerciseRepository(const [bench, cableFly]);
@@ -27,9 +30,11 @@ void main() {
     addTearDown(container.dispose);
 
     // autoDispose のため、テスト中は購読して状態を保持する
-    container
-      ..listen(exerciseManageControllerProvider, (previous, next) {})
-      ..listen(workoutHistoryProvider, (previous, next) {});
+    manageSubscription = container.listen(
+      exerciseManageControllerProvider,
+      (previous, next) {},
+    );
+    container.listen(workoutHistoryProvider, (previous, next) {});
     await container.read(exerciseManageControllerProvider.future);
     await container.read(workoutHistoryProvider.future);
   });
@@ -86,5 +91,29 @@ void main() {
     repo.usage[cableFly.id] = 3;
     expect(await controller().usageCount(cableFly.id), 3);
     expect(await controller().usageCount('unused'), 0);
+  });
+
+  test('保存中に画面を閉じても、保存後に種目一覧と履歴を読み直す', () async {
+    // 種目選択（S-05）など、ほかの画面が種目一覧を購読している状態
+    container.listen(exercisesProvider, (previous, next) {});
+    final fetchBefore = repo.fetchAllCount;
+    final gate = repo.gate = Completer<void>();
+
+    final removing = controller().remove(cableFly.id);
+    // 保存中に種目管理画面を閉じる（購読がなくなる）
+    manageSubscription.close();
+    await Future<void>.delayed(Duration.zero);
+
+    gate.complete();
+    await removing;
+    await container.read(exercisesProvider.future);
+    await container.read(workoutHistoryProvider.future);
+
+    expect(repo.fetchAllCount, greaterThan(fetchBefore));
+    expect(
+      (await container.read(exercisesProvider.future)).map((e) => e.id),
+      isNot(contains(cableFly.id)),
+    );
+    expect(workoutRepo.fetchSummariesCount, 2);
   });
 }
