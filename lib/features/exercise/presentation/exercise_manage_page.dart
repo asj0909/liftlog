@@ -206,10 +206,11 @@ class _ExerciseFormDialogState extends State<_ExerciseFormDialog> {
 
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
-    Navigator.of(context).pop<_ExerciseInput>((
+    final _ExerciseInput input = (
       name: ExerciseNameValidator.normalize(_name.text),
       category: _category,
-    ));
+    );
+    Navigator.of(context).pop(input);
   }
 
   @override
