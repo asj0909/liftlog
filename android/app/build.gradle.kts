@@ -1,4 +1,5 @@
 import java.io.FileInputStream
+import java.io.InputStreamReader
 import java.util.Properties
 
 plugins {
@@ -9,12 +10,30 @@ plugins {
 
 // リリース（ストア提出用）の署名情報。android/key.properties に置き、Git には含めない。
 // ファイルがなければ debug 署名にフォールバックする（手元で release を試すため）。
+// ファイルはあるのに項目が足りないときは、release のビルド時だけエラーにする（debug や Gradle Sync は止めない）。
 // 作り方は tool/create_upload_key.sh を参照。
 val keystoreProperties = Properties()
 val keystorePropertiesFile = rootProject.file("key.properties")
-val hasUploadKey = keystorePropertiesFile.exists()
-if (hasUploadKey) {
-    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+if (keystorePropertiesFile.exists()) {
+    // パスワードに日本語などが含まれても読めるよう UTF-8 で読む
+    InputStreamReader(FileInputStream(keystorePropertiesFile), Charsets.UTF_8).use {
+        keystoreProperties.load(it)
+    }
+}
+val requiredSigningKeys = listOf("storeFile", "storePassword", "keyAlias", "keyPassword")
+val missingSigningKeys = requiredSigningKeys.filter {
+    keystoreProperties.getProperty(it).isNullOrBlank()
+}
+val hasUploadKey = keystorePropertiesFile.exists() && missingSigningKeys.isEmpty()
+
+if (keystorePropertiesFile.exists() && missingSigningKeys.isNotEmpty()) {
+    gradle.taskGraph.whenReady {
+        if (allTasks.any { it.name.contains("Release") }) {
+            throw GradleException(
+                "android/key.properties に次の項目がありません：${missingSigningKeys.joinToString()}",
+            )
+        }
+    }
 }
 
 android {
@@ -41,10 +60,10 @@ android {
     signingConfigs {
         if (hasUploadKey) {
             create("upload") {
-                keyAlias = keystoreProperties["keyAlias"] as String
-                keyPassword = keystoreProperties["keyPassword"] as String
-                storeFile = file(keystoreProperties["storeFile"] as String)
-                storePassword = keystoreProperties["storePassword"] as String
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+                storeFile = file(keystoreProperties.getProperty("storeFile"))
+                storePassword = keystoreProperties.getProperty("storePassword")
             }
         }
     }

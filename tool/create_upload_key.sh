@@ -28,20 +28,33 @@ if [ "$PASSWORD" != "$PASSWORD2" ] || [ "${#PASSWORD}" -lt 6 ]; then
   echo "パスワードが一致しないか、短すぎます。" >&2
   exit 1
 fi
+if [ "$PASSWORD" != "$(printf '%s' "$PASSWORD" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')" ]; then
+  # properties 形式では値の前の空白が読み飛ばされるため
+  echo "パスワードの前後に空白は使えません。" >&2
+  exit 1
+fi
 
 mkdir -p "$KEY_DIR"
-keytool -genkeypair -v \
+# パスワードはコマンドライン引数に書かず（ps で見えるため）、環境変数経由で keytool に渡す
+LIFTLOG_KEY_PASSWORD="$PASSWORD" keytool -genkeypair -v \
   -keystore "$KEY_FILE" -storetype JKS \
   -alias "$ALIAS" -keyalg RSA -keysize 2048 -validity 10000 \
-  -storepass "$PASSWORD" -keypass "$PASSWORD" \
+  -storepass:env LIFTLOG_KEY_PASSWORD -keypass:env LIFTLOG_KEY_PASSWORD \
   -dname "CN=LiftLog"
+
+# properties 形式のエスケープ：バックスラッシュを二重にする（build.gradle.kts は UTF-8 で読む）
+escape_property() {
+  printf '%s' "$1" | sed 's/\\/\\\\/g'
+}
+ESCAPED_PASSWORD="$(escape_property "$PASSWORD")"
+ESCAPED_KEY_FILE="$(escape_property "$KEY_FILE")"
 
 umask 077
 cat > android/key.properties <<PROPS
-storePassword=$PASSWORD
-keyPassword=$PASSWORD
+storePassword=$ESCAPED_PASSWORD
+keyPassword=$ESCAPED_PASSWORD
 keyAlias=$ALIAS
-storeFile=$KEY_FILE
+storeFile=$ESCAPED_KEY_FILE
 PROPS
 
 echo

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/error/app_exception.dart';
@@ -38,17 +39,43 @@ class SupabaseAuthRepository implements AuthRepository {
   Future<void> deleteAccount() => _guard(_deleteAccount);
 
   Future<void> _deleteAccount() async {
-    // DB 関数が auth.users から本人を削除し、記録は CASCADE で消える
-    await _client.rpc<void>('delete_my_account');
+    try {
+      // DB 関数が auth.users から本人を削除し、記録は CASCADE で消える
+      await _client.rpc<void>('delete_my_account');
+    } on PostgrestException {
+      // サーバーが失敗を返した＝削除されていない。ログインしたままにする
+      rethrow;
+    } on Exception catch (e) {
+      // 応答を受け取れなかった：削除されたかどうか分からない。
+      // 削除済みならこのセッションはもう使えないので、端末のセッションは破棄しておく
+      await _signOutLocally();
+      throw UncertainResultException(
+        '通信が途切れたため、アカウントを削除できたか確認できませんでした。'
+        'ログインできる場合は、もう一度削除してください。',
+        cause: e,
+      );
+    }
     // サーバー側のユーザーはもういないので、端末のセッションだけを破棄する
-    await _auth.signOut(scope: SignOutScope.local);
+    await _signOutLocally();
+  }
+
+  /// 端末のセッションを破棄する。
+  ///
+  /// SignOutScope.local でもサーバーへのトークン失効の通知が失敗すると例外になるが、
+  /// 端末のセッションは先に消えている。アカウント削除の結果とは関係ないので、ログに残すだけにする。
+  Future<void> _signOutLocally() async {
+    try {
+      await _auth.signOut(scope: SignOutScope.local);
+    } on Exception catch (e) {
+      debugPrint('[Auth] ローカルのログアウトで例外（無視する）：$e');
+    }
   }
 
   static AppUser? _toAppUser(User? user) =>
       user == null ? null : AppUser(id: user.id, email: user.email);
 
   /// Supabase の例外を AppException に変換する（基本設計書 7.3）。
-  Future<void> _guard(Future<Object?> Function() action) async {
+  Future<void> _guard(Future<void> Function() action) async {
     try {
       await action();
     } on AuthRetryableFetchException catch (e) {
