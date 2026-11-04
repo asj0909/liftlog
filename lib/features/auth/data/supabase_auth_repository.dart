@@ -35,12 +35,14 @@ class SupabaseAuthRepository implements AuthRepository {
   Future<void> signOut() => _guard(_auth.signOut);
 
   @override
-  Future<void> deleteAccount() => _guard(() async {
-        // DB 関数が auth.users から本人を削除し、記録は CASCADE で消える
-        await _client.rpc('delete_my_account');
-        // サーバー側のユーザーはもういないので、端末のセッションだけを破棄する
-        await _auth.signOut(scope: SignOutScope.local);
-      });
+  Future<void> deleteAccount() => _guard(_deleteAccount);
+
+  Future<void> _deleteAccount() async {
+    // DB 関数が auth.users から本人を削除し、記録は CASCADE で消える
+    await _client.rpc<void>('delete_my_account');
+    // サーバー側のユーザーはもういないので、端末のセッションだけを破棄する
+    await _auth.signOut(scope: SignOutScope.local);
+  }
 
   static AppUser? _toAppUser(User? user) =>
       user == null ? null : AppUser(id: user.id, email: user.email);
