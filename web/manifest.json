@@ -1,11 +1,11 @@
 {
-    "name": "liftlog",
-    "short_name": "liftlog",
+    "name": "LiftLog - 筋トレ記録",
+    "short_name": "LiftLog",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#2E7D6B",
+    "theme_color": "#2E7D6B",
+    "description": "筋トレの重量と回数を記録し、推移をグラフで確認できるアプリ",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
