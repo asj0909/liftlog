@@ -50,7 +50,6 @@ AppException mapPostgrestException(PostgrestException e) {
 /// 応答によっては code に HTTP ステータス（"403" など）が入り、
 /// PostgreSQL のコード（"42501" など）は message の JSON の中にある。
 /// その場合は JSON 側のコードを優先する。
-@visibleForTesting
 String? postgresErrorCode(PostgrestException e) {
   final message = e.message.trim();
   if (message.startsWith('{')) {

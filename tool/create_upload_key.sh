@@ -9,7 +9,15 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
+# 以降に作るディレクトリ・鍵・key.properties を本人だけが読めるようにする
+umask 077
+
 KEY_DIR="${KEY_DIR:-$HOME/keys}"
+# storeFile は android/app 基準で解決されるため、相対パスはここで絶対パスにしておく
+case "$KEY_DIR" in
+  /*) ;;
+  *) KEY_DIR="$PWD/$KEY_DIR" ;;
+esac
 KEY_FILE="$KEY_DIR/liftlog-upload.jks"
 ALIAS="upload"
 
@@ -49,7 +57,10 @@ escape_property() {
 ESCAPED_PASSWORD="$(escape_property "$PASSWORD")"
 ESCAPED_KEY_FILE="$(escape_property "$KEY_FILE")"
 
-umask 077
+# 既存の key.properties は umask が効かないので、書き込む前に権限を絞る
+if [ -f android/key.properties ]; then
+  chmod 600 android/key.properties
+fi
 cat > android/key.properties <<PROPS
 storePassword=$ESCAPED_PASSWORD
 keyPassword=$ESCAPED_PASSWORD
