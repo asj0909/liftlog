@@ -53,8 +53,8 @@ MVP の画面はすべて実装済み。Google Play への公開準備中（下�
 - バージョンは pubspec.yaml の `version: 1.0.0+1`。ストアに上げるたびに + の後ろ（versionCode）を増やす
 - 署名：アップロード鍵（`./tool/create_upload_key.sh` で作成、既定 `~/keys/liftlog-upload.jks`）＋ Play アプリ署名。鍵とパスワードは Codespace の外にバックアップする。`android/key.properties` がないと release は debug 署名になる（ストア提出不可）
 - 提出物：`./tool/build_release_aab.sh` → `build/app/outputs/bundle/release/app-release.aab`。接続先は本番の Supabase（`env/prod.json`）
-- 本番の Supabase は開発用と別プロジェクトにする。マイグレーションを本番にも適用すること（`supabase link` → `supabase db push`）
-- アカウント削除：設定画面の「アカウントを削除」→ DB 関数 `delete_my_account()`（SECURITY DEFINER。auth.users から本人を消し、記録は CASCADE で消える）。Play の要件で Web からの削除依頼窓口（URL）も必要
+- 本番の Supabase は開発用と別プロジェクト（LiftLog-prod）。Codespace に Supabase CLI がないため、マイグレーションと seed.sql はダッシュボードの SQL Editor で古い順に実行して適用する（マイグレーションを追加したら本番にも同じ手順で適用すること）
+- アカウント削除：設定画面の「アカウントを削除」→ DB 関数 `delete_my_account()`（SECURITY DEFINER。auth.users から本人を消し、記録は CASCADE で消える）。Play の要件で Web からの削除依頼窓口（URL）も必要。応答を受け取れず削除できたか分からないとき（通信断・5xx・成功応答の本文が読めない）は端末のセッションを破棄して「確認できなかった」と表示する。サーバーが失敗を返したとき（PostgreSQL のコード・PGRST・4xx）と送信前のトークン更新の失敗はログインしたまま
 - 新しい個人デベロッパーアカウントは、製品版の前にクローズドテスト（テスター 12 人以上 × 14 日間連続）が必要
 
 ## 開発環境メモ
