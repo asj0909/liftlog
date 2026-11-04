@@ -7,8 +7,11 @@ import '../domain/exercise_repository.dart';
 import 'exercise_providers.dart';
 
 /// S-07 種目管理画面の状態：プリセット＋自分の種目の一覧。
+///
+/// autoDispose にしない：保存中に画面を閉じても、保存後の再読み込み（invalidate）が
+/// 必ず実行されるようにするため（連続して保存したときも含む）。保持するのは種目一覧だけなので小さい。
 final exerciseManageControllerProvider =
-    AsyncNotifierProvider.autoDispose<ExerciseManageController, List<Exercise>>(
+    AsyncNotifierProvider<ExerciseManageController, List<Exercise>>(
   ExerciseManageController.new,
 );
 
@@ -44,21 +47,12 @@ class ExerciseManageController extends AsyncNotifier<List<Exercise>> {
   Future<int> usageCount(String exerciseId) =>
       _repository.countUsage(exerciseId);
 
-  /// 書き込みから再読み込みの指示までの間はコントローラーを破棄させない。
-  ///
-  /// autoDispose なので、保存中に画面を閉じると破棄され、DB は変わったのに
-  /// 種目一覧・履歴の invalidate が飛ばされてしまう。それを防ぐ。
   Future<void> _write(
     Future<void> Function() action, {
     bool recordsChanged = false,
   }) async {
-    final link = ref.keepAlive();
-    try {
-      await action();
-      _reload(recordsChanged: recordsChanged);
-    } finally {
-      link.close();
-    }
+    await action();
+    _reload(recordsChanged: recordsChanged);
   }
 
   void _reload({bool recordsChanged = false}) {

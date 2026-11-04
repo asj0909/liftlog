@@ -93,6 +93,35 @@ void main() {
     expect(await controller().usageCount('unused'), 0);
   });
 
+  test('保存を 2 つ重ねて、途中で画面を閉じても、両方の保存後に読み直す', () async {
+    container.listen(exercisesProvider, (previous, next) {});
+    final first = repo.gate = Completer<void>();
+    final editing = controller().edit(cableFly.copyWith(name: '先の変更'));
+
+    // 2 つ目の保存（待たずに完了）で種目一覧が invalidate され、コントローラーが再計算される
+    repo.gate = null;
+    await controller().add(name: 'ペックデック', category: ExerciseCategory.chest);
+    await container.read(exerciseManageControllerProvider.future);
+
+    // 1 つ目の保存中に種目管理画面を閉じる
+    manageSubscription.close();
+    await Future<void>.delayed(Duration.zero);
+    final fetchBefore = repo.fetchAllCount;
+    final summariesBefore = workoutRepo.fetchSummariesCount;
+
+    first.complete();
+    await editing;
+    await container.read(exercisesProvider.future);
+    await container.read(workoutHistoryProvider.future);
+
+    expect(repo.fetchAllCount, greaterThan(fetchBefore));
+    expect(workoutRepo.fetchSummariesCount, greaterThan(summariesBefore));
+    expect(
+      (await container.read(exercisesProvider.future)).map((e) => e.name),
+      contains('先の変更'),
+    );
+  });
+
   test('保存中に画面を閉じても、保存後に種目一覧と履歴を読み直す', () async {
     // 種目選択（S-05）など、ほかの画面が種目一覧を購読している状態
     container.listen(exercisesProvider, (previous, next) {});
