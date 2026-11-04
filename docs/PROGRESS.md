@@ -3,7 +3,7 @@
 新しい会話・セッションを始めるときは、CLAUDE.md とこのファイルを最初に読む。
 機能を 1 つ終えるたびに更新する。
 
-最終更新：2026-11-03
+最終更新：2026-11-04
 
 ## 機能の状況（要件定義書の MVP 範囲）
 
@@ -18,13 +18,13 @@
 | F-02 カスタム種目の追加・編集・削除 | S-07 | 完了（ウィジェットテストまで。実機・Web での表示確認は未） |
 | 設定・ログアウト | S-08 | 完了 |
 
-MVP の画面はすべて実装済み。次は「既知の課題」から選ぶ（出荷準備・パスワード再設定画面・Q-03・結合テスト）
+MVP の画面はすべて実装済み。Google Play への公開準備中（下の「Play ストア公開」）
 
 ## 既知の課題
 
 - セットの ± を素早く連打すると、更新リクエストの応答順が前後して最後の値と違う値が保存される可能性がある（基本設計書 Q-03）
 - パスワード再設定メールのリンク先（新しいパスワードを入力する画面）が未実装
-- 出荷準備が未着手：アプリ名・アイコン・アプリ ID・Android の署名・Web のホスティング先
+- 出荷準備の残り：アイコン、プライバシーポリシーとアカウント削除案内の Web ページ、Web のホスティング先
 - 結合テスト（実際の Supabase に接続して ログイン → 記録 → 履歴 を通す）が未作成
 - iOS は手元の Mac（Intel / macOS 13）でビルドできない。確認するなら GitHub Actions の macOS ランナーを使う
 
@@ -46,6 +46,16 @@ MVP の画面はすべて実装済み。次は「既知の課題」から選ぶ�
 - 種目の追加・編集・削除に成功したら exercisesProvider を invalidate（S-05 にも反映）。編集・削除は履歴一覧と推移グラフも invalidate する（種目名・記録が変わるため）
 - exercises.user_id には既定値がない（NULL＝プリセット）ので、追加時はクライアントが auth の user id を入れる。他人の id は RLS で拒否される
 - debug ビルドではエラー表示（スナックバー・エラー画面）に元の例外も出す。release では出さない
+
+## Play ストア公開
+
+- アプリ ID：`com.oojimarounin.liftlog`（公開後は変更不可）。表示名はホーム画面「LiftLog」、ストアの掲載名「LiftLog - 筋トレ記録」
+- バージョンは pubspec.yaml の `version: 1.0.0+1`。ストアに上げるたびに + の後ろ（versionCode）を増やす
+- 署名：アップロード鍵（`./tool/create_upload_key.sh` で作成、既定 `~/keys/liftlog-upload.jks`）＋ Play アプリ署名。鍵とパスワードは Codespace の外にバックアップする。`android/key.properties` がないと release は debug 署名になる（ストア提出不可）
+- 提出物：`./tool/build_release_aab.sh` → `build/app/outputs/bundle/release/app-release.aab`。接続先は本番の Supabase（`env/prod.json`）
+- 本番の Supabase は開発用と別プロジェクトにする。マイグレーションを本番にも適用すること（`supabase link` → `supabase db push`）
+- アカウント削除：設定画面の「アカウントを削除」→ DB 関数 `delete_my_account()`（SECURITY DEFINER。auth.users から本人を消し、記録は CASCADE で消える）。Play の要件で Web からの削除依頼窓口（URL）も必要
+- 新しい個人デベロッパーアカウントは、製品版の前にクローズドテスト（テスター 12 人以上 × 14 日間連続）が必要
 
 ## 開発環境メモ
 

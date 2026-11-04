@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/error/app_exception.dart';
+import '../../../core/error/supabase_error.dart';
 import '../domain/app_user.dart';
 import '../domain/auth_repository.dart';
 
@@ -33,6 +34,14 @@ class SupabaseAuthRepository implements AuthRepository {
   @override
   Future<void> signOut() => _guard(_auth.signOut);
 
+  @override
+  Future<void> deleteAccount() => _guard(() async {
+        // DB 関数が auth.users から本人を削除し、記録は CASCADE で消える
+        await _client.rpc('delete_my_account');
+        // サーバー側のユーザーはもういないので、端末のセッションだけを破棄する
+        await _auth.signOut(scope: SignOutScope.local);
+      });
+
   static AppUser? _toAppUser(User? user) =>
       user == null ? null : AppUser(id: user.id, email: user.email);
 
@@ -45,6 +54,9 @@ class SupabaseAuthRepository implements AuthRepository {
       throw NetworkException(cause: e);
     } on AuthException catch (e) {
       throw UnauthorizedException(message: _authMessage(e), cause: e);
+    } on PostgrestException catch (e) {
+      // DB 関数（アカウント削除）の失敗
+      throw mapPostgrestException(e);
     } on AppException {
       rethrow;
     } catch (e) {

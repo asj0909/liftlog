@@ -1,0 +1,7 @@
+# android/key.properties の見本。実物は Git に含めない（android/.gitignore で除外済み）。
+# tool/create_upload_key.sh で鍵を作ったあと、このファイルを key.properties にコピーして値を入れる。
+storePassword=鍵ストアのパスワード
+keyPassword=鍵のパスワード（storePassword と同じでよい）
+keyAlias=upload
+# android/app から見た相対パス、または絶対パス
+storeFile=/home/codespace/keys/liftlog-upload.jks

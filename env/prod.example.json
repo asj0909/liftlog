@@ -1,0 +1,4 @@
+{
+  "SUPABASE_URL": "https://（本番プロジェクトの ID）.supabase.co",
+  "SUPABASE_ANON_KEY": "本番プロジェクトの Settings → API の publishable（anon）キー"
+}

@@ -2,7 +2,7 @@
     <!-- Supabase との通信に必要（release ビルドでは自動付与されない） -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <application
-        android:label="liftlog"
+        android:label="LiftLog"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

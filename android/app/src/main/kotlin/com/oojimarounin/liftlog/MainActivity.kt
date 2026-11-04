@@ -1,4 +1,4 @@
-package com.liftlog.liftlog
+package com.oojimarounin.liftlog
 
 import io.flutter.embedding.android.FlutterActivity
 

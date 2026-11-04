@@ -4,7 +4,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(17);
+select plan(22);
 
 -- ------------------------------------------------------------
 -- 準備：ユーザー A / B
@@ -146,6 +146,43 @@ select throws_ok(
   $$ select * from public.get_exercise_progress((select bench_id from ids)) $$,
   '42501', null,
   '未ログインでは集計関数を実行できない'
+);
+
+select throws_ok(
+  $$ select public.delete_my_account() $$,
+  '42501', null,
+  '未ログインではアカウント削除を実行できない'
+);
+
+-- ------------------------------------------------------------
+-- アカウント削除：ユーザー B が自分のアカウントを削除する
+-- ------------------------------------------------------------
+set local role authenticated;
+set local request.jwt.claim.sub = 'bbbbbbbb-0000-0000-0000-000000000002';
+
+select lives_ok(
+  $$ select public.delete_my_account() $$,
+  'アカウント削除：ログイン中のユーザーは自分のアカウントを削除できる'
+);
+
+reset role;
+
+select is(
+  (select count(*)::int from auth.users where id = 'bbbbbbbb-0000-0000-0000-000000000002'),
+  0,
+  'アカウント削除：auth.users から本人が消える'
+);
+
+select is(
+  (select count(*)::int from public.exercises where user_id = 'bbbbbbbb-0000-0000-0000-000000000002'),
+  0,
+  'アカウント削除：本人のカスタム種目も消える（CASCADE）'
+);
+
+select ok(
+  (select count(*) from public.workouts where user_id = 'aaaaaaaa-0000-0000-0000-000000000001') > 0
+  and (select count(*) from auth.users where id = 'aaaaaaaa-0000-0000-0000-000000000001') = 1,
+  'アカウント削除：他のユーザーのアカウントと記録は残る'
 );
 
 select * from finish();

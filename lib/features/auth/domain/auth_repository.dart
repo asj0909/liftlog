@@ -15,4 +15,8 @@ abstract interface class AuthRepository {
   Future<void> sendPasswordReset({required String email});
 
   Future<void> signOut();
+
+  /// ログイン中のユーザーのアカウントと、そのユーザーの記録・カスタム種目をすべて削除し、
+  /// ログアウトする（Google Play のアカウント削除要件）。元に戻せない。
+  Future<void> deleteAccount();
 }
