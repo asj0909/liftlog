@@ -42,21 +42,46 @@ class SupabaseAuthRepository implements AuthRepository {
     try {
       // DB 関数が auth.users から本人を削除し、記録は CASCADE で消える
       await _client.rpc<void>('delete_my_account');
-    } on PostgrestException {
-      // サーバーが失敗を返した＝削除されていない。ログインしたままにする
+    } on AuthException {
+      // 送信前のトークン更新の失敗：削除の要求は送られていない。ログインしたまま _guard で変換する
       rethrow;
+    } on PostgrestException catch (e) {
+      if (isDefiniteFailure(e)) {
+        // サーバーが失敗を返した＝削除されていない。ログインしたままにする
+        rethrow;
+      }
+      // 成功応答の本文が読めない・ゲートウェイのエラーなど：削除されたかどうか分からない
+      await _signOutLocally();
+      throw _uncertainDeletion(e);
     } on Exception catch (e) {
       // 応答を受け取れなかった：削除されたかどうか分からない。
       // 削除済みならこのセッションはもう使えないので、端末のセッションは破棄しておく
       await _signOutLocally();
-      throw UncertainResultException(
-        '通信が途切れたため、アカウントを削除できたか確認できませんでした。'
-        'ログインできる場合は、もう一度削除してください。',
-        cause: e,
-      );
+      throw _uncertainDeletion(e);
     }
     // サーバー側のユーザーはもういないので、端末のセッションだけを破棄する
     await _signOutLocally();
+  }
+
+  static UncertainResultException _uncertainDeletion(Object cause) =>
+      UncertainResultException(
+        '通信が途切れたため、アカウントを削除できたか確認できませんでした。'
+        'ログインできる場合は、もう一度削除してください。',
+        cause: cause,
+      );
+
+  /// サーバーが「処理しなかった」と判断できる失敗か。
+  ///
+  /// PostgreSQL のエラーコード（42501 など 5 桁）・PostgREST のコード（PGRST...）・
+  /// HTTP 4xx は、DB 関数が実行されなかった（またはロールバックされた）ことを表す。
+  /// それ以外（5xx・コードなし・成功応答の本文解析の失敗など）は結果が分からない。
+  @visibleForTesting
+  static bool isDefiniteFailure(PostgrestException e) {
+    final code = postgresErrorCode(e) ?? '';
+    if (RegExp(r'^[0-9A-Z]{5}$').hasMatch(code)) return true;
+    if (code.startsWith('PGRST')) return true;
+    final status = int.tryParse(code);
+    return status != null && status >= 400 && status < 500;
   }
 
   /// 端末のセッションを破棄する。
