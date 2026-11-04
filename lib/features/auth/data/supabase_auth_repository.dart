@@ -79,7 +79,8 @@ class SupabaseAuthRepository implements AuthRepository {
   static bool isDefiniteFailure(PostgrestException e) {
     final code = postgresErrorCode(e) ?? '';
     if (RegExp(r'^[0-9A-Z]{5}$').hasMatch(code)) return true;
-    if (code.startsWith('PGRST')) return true;
+    // PGRSTX00 は PostgREST 内部の予期しないエラー（HTTP 500）なので結果不明に含める
+    if (code.startsWith('PGRST')) return code != 'PGRSTX00';
     final status = int.tryParse(code);
     return status != null && status >= 400 && status < 500;
   }

@@ -29,6 +29,8 @@ void main() {
       expect(definite('500'), isFalse);
       expect(definite(null), isFalse);
       expect(definite('200'), isFalse);
+      // PostgREST 内部の予期しないエラー（HTTP 500）
+      expect(definite('PGRSTX00'), isFalse);
     });
   });
 }
