@@ -35,6 +35,11 @@ class ValidationException extends AppException {
   const ValidationException(super.message, {super.cause});
 }
 
+/// 処理の応答を受け取れず、成功したかどうか分からない（アカウント削除など取り消せない操作で使う）
+class UncertainResultException extends AppException {
+  const UncertainResultException(super.message, {super.cause});
+}
+
 class UnknownException extends AppException {
   const UnknownException({super.cause})
       : super('予期しないエラーが発生しました。');

@@ -6,7 +6,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 echo "==> プラットフォームフォルダを生成（既存ファイルは上書きしない）"
-flutter create --project-name liftlog --org com.liftlog \
+flutter create --project-name liftlog --org com.oojimarounin \
   --platforms android,ios,web .
 
 echo "==> 依存パッケージを追加"

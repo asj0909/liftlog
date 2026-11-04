@@ -59,5 +59,14 @@ class FakeAuthRepository implements AuthRepository {
     _setUser(null);
   }
 
+  var deleteAccountCount = 0;
+
+  @override
+  Future<void> deleteAccount() async {
+    _throwIfNeeded();
+    deleteAccountCount++;
+    _setUser(null);
+  }
+
   Future<void> dispose() => _controller.close();
 }
