@@ -2,5 +2,5 @@
 // secret / service_role キーは絶対に書かないこと。
 window.LIFTLOG_SUPABASE = {
   url: 'https://ipvgcevpmmsttlazwugf.supabase.co',
-  publishableKey: '{{SUPABASE_PUBLISHABLE_KEY}}',
+  publishableKey: 'sb_publishable_obJcnIL336trLVM8P0vA3A_fXGw_hEy',
 };
