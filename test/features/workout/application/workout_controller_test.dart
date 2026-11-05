@@ -21,6 +21,7 @@ void main() {
   late FakeWorkoutRepository repo;
   late FakeProgressRepository progressRepo;
   late ProviderContainer container;
+  late ProviderSubscription<AsyncValue<WorkoutDetail>> subscription;
 
   setUp(() async {
     repo = FakeWorkoutRepository()
@@ -41,7 +42,10 @@ void main() {
     addTearDown(container.dispose);
 
     // autoDispose のため、テスト中は購読して状態を保持する
-    container.listen(workoutControllerProvider(workoutId), (previous, next) {});
+    subscription = container.listen(
+      workoutControllerProvider(workoutId),
+      (previous, next) {},
+    );
     await container.read(workoutControllerProvider(workoutId).future);
   });
 
@@ -214,6 +218,21 @@ void main() {
 
       await container.read(exerciseProgressProvider(key).future);
       expect(progressRepo.fetchCount, 2);
+    });
+
+    test('送信中に画面を閉じても、送っていない最新の値まで保存する', () async {
+      final gate = repo.gate = Completer<void>();
+      final first = controller().updateSet('we1', firstSet.copyWith(weightKg: 62.5));
+      await controller().updateSet('we1', firstSet.copyWith(weightKg: 67.5));
+
+      // 記録画面を閉じる（購読がなくなる）
+      subscription.close();
+      await Future<void>.delayed(Duration.zero);
+
+      gate.complete();
+      await first;
+
+      expect(repo.updatedSets.map((s) => s.weightKg), [62.5, 67.5]);
     });
 
     test('1 件も保存できずに失敗したときは、読み直さない', () async {

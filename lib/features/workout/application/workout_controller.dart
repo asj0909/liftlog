@@ -109,12 +109,15 @@ class WorkoutController extends AsyncNotifier<WorkoutDetail> {
     _pendingSets[id] = updated;
     if (!_savingSetIds.add(id)) return; // 送信中：完了後に最新の値を送る
 
+    // 送信中に画面を閉じても、送っていない最新の値まで保存し終えるまでは破棄させない
+    final keepAlive = ref.keepAlive();
+    final repository = _repository;
     var savedAny = false;
     try {
       while (true) {
         final next = _pendingSets.remove(id);
         if (next == null) break;
-        await _repository.updateSet(next);
+        await repository.updateSet(next);
         _confirmedSets[id] = next;
         savedAny = true;
       }
@@ -131,6 +134,7 @@ class WorkoutController extends AsyncNotifier<WorkoutDetail> {
     } finally {
       _savingSetIds.remove(id);
       _confirmedSets.remove(id);
+      keepAlive.close();
     }
   }
 
