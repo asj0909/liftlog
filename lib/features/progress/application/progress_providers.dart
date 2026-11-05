@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/date/today_provider.dart';
+import '../../../core/session/current_user_id.dart';
 import '../../../core/supabase/supabase_provider.dart';
 import '../data/supabase_progress_repository.dart';
 import '../domain/progress_point.dart';
@@ -16,8 +17,11 @@ typedef ProgressKey = ({String exerciseId, ProgressRange range});
 /// S-06 推移グラフのデータ。記録を変更したら WorkoutController が invalidate する。
 final exerciseProgressProvider =
     FutureProvider.autoDispose.family<List<ProgressPoint>, ProgressKey>(
-  (ref, key) => ref.watch(progressRepositoryProvider).fetchProgress(
-        exerciseId: key.exerciseId,
-        from: key.range.startDate(ref.watch(todayProvider)),
-      ),
+  (ref, key) {
+    ref.watch(currentUserIdProvider);
+    return ref.watch(progressRepositoryProvider).fetchProgress(
+          exerciseId: key.exerciseId,
+          from: key.range.startDate(ref.watch(todayProvider)),
+        );
+  },
 );

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -41,13 +43,12 @@ void main() {
           home: UserDataReset(
             child: Consumer(
               builder: (context, ref, _) {
-                final names = ref
-                        .watch(exerciseManageControllerProvider)
-                        .value
-                        ?.map((e) => e.name)
-                        .join(',') ??
-                    '';
-                return Text(names);
+                // 画面と同じく when の既定の動きで表示する
+                return ref.watch(exerciseManageControllerProvider).when(
+                      data: (list) => Text(list.map((e) => e.name).join(',')),
+                      loading: () => const Text('読み込み中'),
+                      error: (error, _) => Text('エラー：$error'),
+                    );
               },
             ),
           ),
@@ -59,11 +60,21 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('ベンチプレス,A のカスタム種目'), findsOneWidget);
 
+    // B の取得を保留し、その間に A の種目が見えないことを確かめる
+    final fetchGate = exercises.fetchGate = Completer<void>();
     await auth.signOut();
     exercises.exercises
       ..clear()
       ..addAll(const [bench, userBCustom]);
     await auth.signIn(email: 'b@example.com', password: 'password123');
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.textContaining('A のカスタム種目'), findsNothing);
+    expect(find.text('読み込み中'), findsOneWidget);
+
+    fetchGate.complete();
+    exercises.fetchGate = null;
     await tester.pumpAndSettle();
 
     expect(find.textContaining('A のカスタム種目'), findsNothing);
