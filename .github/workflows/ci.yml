@@ -50,4 +50,28 @@ jobs:
           cache: false
 
       - run: flutter pub get
+
+      # 1. key.properties がないとき：debug 署名にフォールバックして release をビルドできる
       - run: flutter build apk --release
+
+      # 2. key.properties があるとき：アップロード鍵の署名設定でストア用の AAB をビルドできる
+      #    鍵は CI の中だけで使い捨てにする（本番の鍵ではない）
+      - name: 使い捨てのアップロード鍵と key.properties を作る
+        env:
+          CI_KEY_PASSWORD: ci-only-password
+        run: |
+          keytool -genkeypair -noprompt \
+            -keystore "$RUNNER_TEMP/ci-upload.jks" -storetype JKS \
+            -alias upload -keyalg RSA -keysize 2048 -validity 1 \
+            -storepass:env CI_KEY_PASSWORD -keypass:env CI_KEY_PASSWORD \
+            -dname "CN=LiftLog CI"
+          cat > android/key.properties <<PROPS
+          storePassword=$CI_KEY_PASSWORD
+          keyPassword=$CI_KEY_PASSWORD
+          keyAlias=upload
+          storeFile=$RUNNER_TEMP/ci-upload.jks
+          PROPS
+      - run: flutter build appbundle --release
+      - name: AAB がアップロード鍵で署名されていることを確認する
+        run: |
+          jarsigner -verify -verbose -certs build/app/outputs/bundle/release/app-release.aab | grep -q "CN=LiftLog CI"
