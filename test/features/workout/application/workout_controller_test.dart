@@ -142,6 +142,59 @@ void main() {
     });
   });
 
+  group('updateSet を続けて呼んだとき（± の連打）', () {
+    test('画面はすぐに最新の値になり、保存は順番に送って最後に最新の値を送る', () async {
+      final gate = repo.gate = Completer<void>();
+
+      final first = controller().updateSet('we1', firstSet.copyWith(weightKg: 62.5));
+      // 1 件目の送信中に 2 回押す。途中の値（65）は送らなくてよい
+      await controller().updateSet('we1', firstSet.copyWith(weightKg: 65));
+      await controller().updateSet('we1', firstSet.copyWith(weightKg: 67.5));
+      expect(setsOf('we1').single.weightKg, 67.5);
+
+      gate.complete();
+      await first;
+
+      expect(repo.updatedSets.map((s) => s.weightKg), [62.5, 67.5]);
+      expect(setsOf('we1').single.weightKg, 67.5);
+    });
+
+    test('送信中の保存が失敗したら、最後に保存できた値に戻して送っていない変更は捨てる', () async {
+      final gate = repo.gate = Completer<void>();
+
+      final first = controller().updateSet('we1', firstSet.copyWith(weightKg: 62.5));
+      await controller().updateSet('we1', firstSet.copyWith(weightKg: 65));
+
+      repo.nextError = const NetworkException();
+      gate.complete();
+      await expectLater(first, throwsA(isA<NetworkException>()));
+
+      expect(repo.updatedSets, isEmpty);
+      expect(setsOf('we1'), [firstSet]);
+    });
+
+    test('後から送った値が失敗したら、その前に保存できた値に戻す', () async {
+      final firstGate = repo.gate = Completer<void>();
+
+      final first = controller().updateSet('we1', firstSet.copyWith(weightKg: 62.5));
+      await controller().updateSet('we1', firstSet.copyWith(weightKg: 65));
+
+      // 2 件目（65）の送信は別のゲートで止め、失敗させる
+      final secondGate = repo.gate = Completer<void>();
+      firstGate.complete();
+      // 1 件目（62.5）の保存が終わるのを待ってから、2 件目を失敗させる
+      while (repo.updatedSets.isEmpty) {
+        await Future<void>.delayed(Duration.zero);
+      }
+      repo.nextError = const NetworkException();
+      secondGate.complete();
+      await expectLater(first, throwsA(isA<NetworkException>()));
+
+      expect(repo.updatedSets.map((s) => s.weightKg), [62.5]);
+      expect(setsOf('we1').single.weightKg, 62.5);
+    });
+  });
+
   group('deleteSet', () {
     test('セットを削除する', () async {
       await controller().deleteSet('we1', 's1');
