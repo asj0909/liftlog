@@ -21,6 +21,9 @@ class FakeExerciseRepository implements ExerciseRepository {
   /// 設定すると、書き込み系の呼び出しがこれの完了まで待つ（保存中の状態を確認する用）
   Completer<void>? gate;
 
+  /// 設定すると、fetchAll がこれの完了まで待つ（読み込み中の表示を確認する用）
+  Completer<void>? fetchGate;
+
   var fetchAllCount = 0;
   final deletedIds = <String>[];
 
@@ -39,6 +42,8 @@ class FakeExerciseRepository implements ExerciseRepository {
   @override
   Future<List<Exercise>> fetchAll() async {
     fetchAllCount++;
+    final fetchGate = this.fetchGate;
+    if (fetchGate != null) await fetchGate.future;
     return [...exercises];
   }
 

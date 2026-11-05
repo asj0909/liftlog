@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/app_exception.dart';
+import '../../../core/session/current_user_id.dart';
 import '../../exercise/domain/exercise.dart';
 import '../../progress/application/progress_providers.dart';
 import '../domain/set_defaults.dart';
@@ -30,8 +31,10 @@ class WorkoutController extends AsyncNotifier<WorkoutDetail> {
   WorkoutDetail get _current => state.requireValue;
 
   @override
-  Future<WorkoutDetail> build() =>
-      ref.watch(workoutRepositoryProvider).fetchDetail(workoutId);
+  Future<WorkoutDetail> build() {
+    ref.watch(currentUserIdProvider);
+    return ref.watch(workoutRepositoryProvider).fetchDetail(workoutId);
+  }
 
   /// 種目を追加する（S-05 で選んだ種目）
   Future<void> addExercise(Exercise exercise) async {

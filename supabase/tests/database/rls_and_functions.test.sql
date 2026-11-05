@@ -4,7 +4,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(22);
+select plan(23);
 
 -- ------------------------------------------------------------
 -- 準備：ユーザー A / B
@@ -58,6 +58,18 @@ select results_eq(
   $$ select weight_kg, reps from public.get_previous_sets((select bench_id from ids), '2026-10-27') $$,
   $$ values (60.00::numeric, 10), (60.00::numeric, 8) $$,
   '前回記録：指定日より前の直近セッションのセットを順番どおり返す'
+);
+
+-- 種目を追加しただけでセットがない日（10/25）は「前回」にしない（QA M-03）
+insert into public.workouts (id, performed_on) values
+  ('11111111-0000-0000-0000-000000000003', '2026-10-25');
+insert into public.workout_exercises (id, workout_id, exercise_id, sort_order) values
+  ('22222222-0000-0000-0000-000000000003', '11111111-0000-0000-0000-000000000003', (select bench_id from ids), 0);
+
+select results_eq(
+  $$ select performed_on, weight_kg, reps from public.get_previous_sets((select bench_id from ids), '2026-10-27') $$,
+  $$ values ('2026-10-20'::date, 60.00::numeric, 10), ('2026-10-20'::date, 60.00::numeric, 8) $$,
+  '前回記録：セットが 1 件もない種目エントリは飛ばして、その前のセッションを返す'
 );
 
 select is(

@@ -44,6 +44,8 @@ MVP の画面はすべて実装済み。Google Play への公開準備中（下�
 - 種目の削除は常に確認ダイアログを出す。記録で使われていれば件数と「記録（セット）も削除され元に戻せない」ことを表示する（削除は DB の ON DELETE CASCADE）
 - 種目の追加・編集・削除に成功したら exercisesProvider を invalidate（S-05 にも反映）。編集・削除は履歴一覧と推移グラフも invalidate する（種目名・記録が変わるため）
 - exercises.user_id には既定値がない（NULL＝プリセット）ので、追加時はクライアントが auth の user id を入れる。他人の id は RLS で拒否される
+- ユーザーごとのデータを持つ Provider は core/session の currentUserIdProvider を watch する（新しく作るときも必ず）。ユーザーが変わると作り直され、再取得中は読み込み中の表示になるので前のユーザーのデータが残らない。値は app/user_data_reset.dart の UserDataReset が認証状態から更新する
+- 前回記録（get_previous_sets）はセットが 1 件以上ある種目エントリだけを対象にする（20261105000000 のマイグレーション。本番にも SQL Editor で適用すること）
 - debug ビルドではエラー表示（スナックバー・エラー画面）に元の例外も出す。release では出さない
 
 ## Play ストア公開
