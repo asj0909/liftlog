@@ -28,6 +28,7 @@ footer{margin-top:48px;color:var(--muted);font-size:.85rem}
 
 <h1>LiftLog - 筋トレ記録</h1>
 <p class="meta">筋トレの重量・回数を記録し、推移をグラフで確認できるアプリです。</p>
+<p id="auth-result" class="note" hidden></p>
 <h2>サポート</h2>
 <ul>
 <li><a href="privacy.html">プライバシーポリシー</a></li>
@@ -38,5 +39,25 @@ footer{margin-top:48px;color:var(--muted);font-size:.85rem}
 
 <footer>LiftLog - 筋トレ記録 / 開発者：gp_sensei</footer>
 </main>
+<script>
+// 認証メール（登録確認など）のリンクから来たときに結果を表示する。
+// Supabase は確認後に Site URL（このページ）へ ?code= または #error= を付けて戻す
+(function () {
+  var query = new URLSearchParams(location.search);
+  var hash = new URLSearchParams(location.hash.slice(1));
+  var box = document.getElementById('auth-result');
+  var message = null;
+  if (query.get('error') || hash.get('error')) {
+    message = 'リンクの有効期限が切れているか、すでに使われています。アプリからもう一度お試しください。';
+  } else if (query.get('code')) {
+    message = 'メールアドレスの確認が完了しました。アプリに戻ってログインしてください。';
+  }
+  if (message === null) return;
+  box.textContent = message;
+  box.hidden = false;
+  // コードやエラーを URL に残さない
+  history.replaceState(null, '', location.pathname);
+})();
+</script>
 </body>
 </html>
