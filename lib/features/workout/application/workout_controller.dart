@@ -109,18 +109,24 @@ class WorkoutController extends AsyncNotifier<WorkoutDetail> {
     _pendingSets[id] = updated;
     if (!_savingSetIds.add(id)) return; // 送信中：完了後に最新の値を送る
 
+    var savedAny = false;
     try {
       while (true) {
         final next = _pendingSets.remove(id);
         if (next == null) break;
         await _repository.updateSet(next);
         _confirmedSets[id] = next;
+        savedAny = true;
       }
       if (ref.mounted) _invalidateReadModels();
     } on AppException {
       _pendingSets.remove(id);
       final restore = _confirmedSets[id];
-      if (ref.mounted && restore != null) _replaceSet(entryId, restore);
+      if (ref.mounted) {
+        if (restore != null) _replaceSet(entryId, restore);
+        // 途中までは保存できているので、履歴・推移グラフはその値で読み直す
+        if (savedAny) _invalidateReadModels();
+      }
       rethrow;
     } finally {
       _savingSetIds.remove(id);

@@ -193,6 +193,43 @@ void main() {
       expect(repo.updatedSets.map((s) => s.weightKg), [62.5]);
       expect(setsOf('we1').single.weightKg, 62.5);
     });
+
+    test('途中まで保存できてから失敗したときは、推移グラフを読み直す', () async {
+      const key = (exerciseId: 'e-bench', range: ProgressRange.all);
+      container.listen(exerciseProgressProvider(key), (previous, next) {});
+      await container.read(exerciseProgressProvider(key).future);
+      expect(progressRepo.fetchCount, 1);
+
+      final firstGate = repo.gate = Completer<void>();
+      final first = controller().updateSet('we1', firstSet.copyWith(weightKg: 62.5));
+      await controller().updateSet('we1', firstSet.copyWith(weightKg: 65));
+      final secondGate = repo.gate = Completer<void>();
+      firstGate.complete();
+      while (repo.updatedSets.isEmpty) {
+        await Future<void>.delayed(Duration.zero);
+      }
+      repo.nextError = const NetworkException();
+      secondGate.complete();
+      await expectLater(first, throwsA(isA<NetworkException>()));
+
+      await container.read(exerciseProgressProvider(key).future);
+      expect(progressRepo.fetchCount, 2);
+    });
+
+    test('1 件も保存できずに失敗したときは、読み直さない', () async {
+      const key = (exerciseId: 'e-bench', range: ProgressRange.all);
+      container.listen(exerciseProgressProvider(key), (previous, next) {});
+      await container.read(exerciseProgressProvider(key).future);
+
+      repo.nextError = const NetworkException();
+      await expectLater(
+        controller().updateSet('we1', firstSet.copyWith(weightKg: 62.5)),
+        throwsA(isA<NetworkException>()),
+      );
+
+      await container.read(exerciseProgressProvider(key).future);
+      expect(progressRepo.fetchCount, 1);
+    });
   });
 
   group('deleteSet', () {
