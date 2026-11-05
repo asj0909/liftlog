@@ -20,7 +20,8 @@ jobs:
       - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
         with:
           channel: stable
-          cache: true
+          # flutter-action のキャッシュは内部でタグ指定の actions/cache を使うため無効にする
+          cache: false
 
       - run: flutter pub get
       - run: flutter analyze --no-fatal-infos
@@ -45,7 +46,8 @@ jobs:
       - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
         with:
           channel: stable
-          cache: true
+          # flutter-action のキャッシュは内部でタグ指定の actions/cache を使うため無効にする
+          cache: false
 
       - run: flutter pub get
       - run: flutter build apk --release
