@@ -65,5 +65,5 @@ MVP の画面はすべて実装済み。Google Play への公開準備中（下�
 - Web の確認：`./tool/run_web_debug.sh`（debug・ホットリロード可）→ ポートタブの 8080 を新しいタブで開く。古いタブを再読み込みすると 401 や読み込み中のままになることがある
 - debug が読み込み中のまま止まるときは、debug のターミナルで `q` を押して終了してから `./tool/run_web_release.sh`（release ビルド＋静的サーバー dhttpd。同じ 8080 番を使う。コードを変えたら再実行）
 - release ビルドの Android は main の AndroidManifest に INTERNET 権限が必要（追加済み）
-- CI：main への push ごとに GitHub Actions で `flutter analyze` と `flutter test` を実行
+- CI：main への push と PR ごとに GitHub Actions で `flutter analyze`・`flutter test`（test ジョブ）と `flutter build apk --release`（android ジョブ。key.properties がないので debug 署名）を実行。アクションはコミット SHA で固定
 - env/dev.json（Supabase の URL・キー）は Git に含めない。Codespace を作り直したら手で作る
