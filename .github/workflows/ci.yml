@@ -5,17 +5,75 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
+# アクションはタグではなくコミット SHA で固定する（タグの付け替えによる差し替えを防ぐ）
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
 
-      - uses: subosito/flutter-action@v2
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
         with:
           channel: stable
-          cache: true
+          # flutter-action のキャッシュは内部でタグ指定の actions/cache を使うため無効にする
+          cache: false
 
       - run: flutter pub get
       - run: flutter analyze --no-fatal-infos
       - run: flutter test
+
+  # Android のビルドが通ること（Gradle・署名設定・マニフェストの変更を PR で確認する）
+  # android/key.properties はないので release でも debug 署名にフォールバックする
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4.9.1
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          channel: stable
+          # flutter-action のキャッシュは内部でタグ指定の actions/cache を使うため無効にする
+          cache: false
+
+      - run: flutter pub get
+
+      # 1. key.properties がないとき：debug 署名にフォールバックして release をビルドできる
+      - run: flutter build apk --release
+
+      # 2. key.properties があるとき：アップロード鍵の署名設定でストア用の AAB をビルドできる
+      #    鍵は CI の中だけで使い捨てにする（本番の鍵ではない）
+      - name: 使い捨てのアップロード鍵と key.properties を作る
+        env:
+          CI_KEY_PASSWORD: ci-only-password
+        run: |
+          keytool -genkeypair -noprompt \
+            -keystore "$RUNNER_TEMP/ci-upload.jks" -storetype JKS \
+            -alias upload -keyalg RSA -keysize 2048 -validity 1 \
+            -storepass:env CI_KEY_PASSWORD -keypass:env CI_KEY_PASSWORD \
+            -dname "CN=LiftLog CI"
+          cat > android/key.properties <<PROPS
+          storePassword=$CI_KEY_PASSWORD
+          keyPassword=$CI_KEY_PASSWORD
+          keyAlias=upload
+          storeFile=$RUNNER_TEMP/ci-upload.jks
+          PROPS
+      - run: flutter build appbundle --release
+      - name: AAB がアップロード鍵で署名されていることを確認する
+        run: |
+          # jarsigner の終了コードで検証の成否を見てから、署名者が CI の鍵であることを確認する
+          jarsigner -verify -verbose -certs build/app/outputs/bundle/release/app-release.aab > "$RUNNER_TEMP/jarsigner.txt"
+          grep -q "CN=LiftLog CI" "$RUNNER_TEMP/jarsigner.txt"
