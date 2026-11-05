@@ -80,7 +80,22 @@ class WorkoutController extends AsyncNotifier<WorkoutDetail> {
     }
   }
 
-  /// 重量・回数を変更する
+  /// セットごとの、サーバーに保存できている最後の値（失敗したときの戻し先）
+  final _confirmedSets = <String, WorkoutSet>{};
+
+  /// セットごとの、まだ送っていない最新の値
+  final _pendingSets = <String, WorkoutSet>{};
+
+  /// 保存を送信中のセット id
+  final _savingSetIds = <String>{};
+
+  /// 重量・回数を変更する。
+  ///
+  /// ± を続けて押しても画面はすぐに変わる。保存はセットごとに 1 件ずつ順番に送り、
+  /// 送信中に変わった分は送信完了後に最新の値だけをまとめて送る（QA M-01、既知の課題 Q-03）。
+  /// これで応答の順番が入れ替わって古い値が残ることがない。
+  /// 保存に失敗したら、最後に保存できた値に戻して AppException を投げる（送っていない変更は捨てる）。
+  /// 送信中に呼ばれた変更は、その場ではすぐに完了し、結果は最初の呼び出しが返す。
   Future<void> updateSet(String entryId, WorkoutSet updated) async {
     final id = updated.id;
     if (id == null) return; // 保存前のセットは変更させない
@@ -89,14 +104,40 @@ class WorkoutController extends AsyncNotifier<WorkoutDetail> {
         SetInputValidator.reps(updated.reps);
     if (error != null) throw ValidationException(error);
 
-    final old = _current.entry(entryId).sets.firstWhere((s) => s.id == id);
+    _confirmedSets.putIfAbsent(
+      id,
+      () => _current.entry(entryId).sets.firstWhere((s) => s.id == id),
+    );
     _replaceSet(entryId, updated);
+    _pendingSets[id] = updated;
+    if (!_savingSetIds.add(id)) return; // 送信中：完了後に最新の値を送る
+
+    // 送信中に画面を閉じても、送っていない最新の値まで保存し終えるまでは破棄させない
+    final keepAlive = ref.keepAlive();
+    final repository = _repository;
+    var savedAny = false;
     try {
-      await _repository.updateSet(updated);
+      while (true) {
+        final next = _pendingSets.remove(id);
+        if (next == null) break;
+        await repository.updateSet(next);
+        _confirmedSets[id] = next;
+        savedAny = true;
+      }
       if (ref.mounted) _invalidateReadModels();
     } on AppException {
-      if (ref.mounted) _replaceSet(entryId, old);
+      _pendingSets.remove(id);
+      final restore = _confirmedSets[id];
+      if (ref.mounted) {
+        if (restore != null) _replaceSet(entryId, restore);
+        // 途中までは保存できているので、履歴・推移グラフはその値で読み直す
+        if (savedAny) _invalidateReadModels();
+      }
       rethrow;
+    } finally {
+      _savingSetIds.remove(id);
+      _confirmedSets.remove(id);
+      keepAlive.close();
     }
   }
 
