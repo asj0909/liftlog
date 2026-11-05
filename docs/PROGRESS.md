@@ -54,7 +54,7 @@ MVP の画面はすべて実装済み。Google Play への公開準備中（下�
 - 提出物：`./tool/build_release_aab.sh` → `build/app/outputs/bundle/release/app-release.aab`。接続先は本番の Supabase（`env/prod.json`）
 - 本番の Supabase は開発用と別プロジェクト（LiftLog-prod）。Codespace に Supabase CLI がないため、マイグレーションと seed.sql はダッシュボードの SQL Editor で古い順に実行して適用する（マイグレーションを追加したら本番にも同じ手順で適用すること）
 - アカウント削除：設定画面の「アカウントを削除」→ DB 関数 `delete_my_account()`（SECURITY DEFINER。auth.users から本人を消し、記録は CASCADE で消える）。Play の要件で Web からの削除依頼窓口（URL）も必要。応答を受け取れず削除できたか分からないとき（通信断・5xx・成功応答の本文が読めない）は端末のセッションを破棄して「確認できなかった」と表示する。サーバーが失敗を返したとき（PostgreSQL のコード・PGRST・4xx）と送信前のトークン更新の失敗はログインしたまま
-- パスワード再設定：メールのリンクは GitHub Pages の `site/reset-password.html`（token_hash を verifyOtp で確認 → updateUser）。アプリは PKCE なので、Supabase の既定のリンク（?code=）は Web では使えない。そのため Supabase のメールテンプレートを token_hash 方式に変えている（設定は docs/03_ストア掲載情報.md の「Supabase の認証設定」）。接続先は `site/supabase-config.js`（publishable キーのみ）
+- パスワード再設定：メールのリンクは GitHub Pages の `site/reset-password.html`（フラグメントの token_hash を、「変更する」を押したときに verifyOtp で確認 → updateUser。開いただけではトークンを使わない）。アプリは PKCE なので、Supabase の既定のリンク（?code=）は Web では使えない。そのため Supabase のメールテンプレートを token_hash 方式に変えている（設定は docs/03_ストア掲載情報.md の「Supabase の認証設定」）。接続先は `site/supabase-config.js`（publishable キーのみ）
 - アプリ内のプライバシーポリシー：ログイン画面の下と設定画面にリンク（Play のユーザーデータ ポリシーで必須）。URL は core/links/external_links.dart、開くのは url_launcher（openUrlProvider でテスト時に差し替え）
 - 新しい個人デベロッパーアカウントは、製品版の前にクローズドテスト（テスター 12 人以上 × 14 日間連続）が必要
 
