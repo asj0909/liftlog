@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/app_exception.dart';
 import '../../../core/widgets/error_snack_bar.dart';
+import '../../../core/widgets/privacy_policy_link.dart';
 import '../application/auth_providers.dart';
 import '../domain/credentials_validator.dart';
 
@@ -141,6 +142,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     onPressed: _submitting ? null : _resetPassword,
                     child: const Text('パスワードを忘れた方'),
                   ),
+                  const SizedBox(height: 16),
+                  // 新規登録の前に読めるようにする（Google Play の要件）
+                  const PrivacyPolicyLink(),
                 ],
               ),
             ),

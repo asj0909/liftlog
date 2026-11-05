@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:liftlog/core/error/app_exception.dart';
+import 'package:liftlog/core/links/external_links.dart';
 import 'package:liftlog/features/auth/application/auth_providers.dart';
 import 'package:liftlog/features/auth/presentation/login_page.dart';
 
@@ -9,14 +10,24 @@ import '../../../helpers/fake_auth_repository.dart';
 
 void main() {
   late FakeAuthRepository repo;
+  late List<Uri> openedUrls;
 
-  setUp(() => repo = FakeAuthRepository());
+  setUp(() {
+    repo = FakeAuthRepository();
+    openedUrls = [];
+  });
   tearDown(() => repo.dispose());
 
   Future<void> pumpLoginPage(WidgetTester tester) async {
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [authRepositoryProvider.overrideWithValue(repo)],
+        overrides: [
+          authRepositoryProvider.overrideWithValue(repo),
+          openUrlProvider.overrideWithValue((url) async {
+            openedUrls.add(url);
+            return true;
+          }),
+        ],
         child: const MaterialApp(home: LoginPage()),
       ),
     );
@@ -92,5 +103,15 @@ void main() {
 
     expect(find.textContaining('通信に失敗しました'), findsOneWidget);
     expect(find.textContaining('SocketException: テスト用の原因'), findsOneWidget);
+  });
+
+  testWidgets('ログイン前でもプライバシーポリシーを開ける', (tester) async {
+    await pumpLoginPage(tester);
+
+    await tester.ensureVisible(find.byKey(const Key('privacy_policy_link')));
+    await tester.tap(find.byKey(const Key('privacy_policy_link')));
+    await tester.pumpAndSettle();
+
+    expect(openedUrls, [ExternalLinks.privacyPolicy]);
   });
 }

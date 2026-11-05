@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/router.dart';
 import '../../../core/widgets/error_snack_bar.dart';
+import '../../../core/widgets/privacy_policy_link.dart';
 import '../../auth/application/auth_providers.dart';
 
 /// S-08 設定。
@@ -29,6 +30,12 @@ class SettingsPage extends ConsumerWidget {
             title: const Text('種目管理'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.go(AppRoutes.exercises),
+          ),
+          ListTile(
+            leading: const Icon(Icons.privacy_tip_outlined),
+            title: const Text('プライバシーポリシー'),
+            trailing: const Icon(Icons.open_in_new),
+            onTap: () => openPrivacyPolicy(context, ref),
           ),
           const Divider(),
           ListTile(
