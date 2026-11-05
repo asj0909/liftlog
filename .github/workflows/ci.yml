@@ -74,4 +74,6 @@ jobs:
       - run: flutter build appbundle --release
       - name: AAB がアップロード鍵で署名されていることを確認する
         run: |
-          jarsigner -verify -verbose -certs build/app/outputs/bundle/release/app-release.aab | grep -q "CN=LiftLog CI"
+          # jarsigner の終了コードで検証の成否を見てから、署名者が CI の鍵であることを確認する
+          jarsigner -verify -verbose -certs build/app/outputs/bundle/release/app-release.aab > "$RUNNER_TEMP/jarsigner.txt"
+          grep -q "CN=LiftLog CI" "$RUNNER_TEMP/jarsigner.txt"
