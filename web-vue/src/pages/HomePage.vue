@@ -15,6 +15,7 @@ async function logout() {
   <main class="home">
     <h1>ホーム</h1>
     <p>{{ auth.user?.email }} でログイン中</p>
+    <p><RouterLink :to="{ name: 'exercises' }">種目管理</RouterLink></p>
     <button @click="logout">ログアウト</button>
   </main>
 </template>
