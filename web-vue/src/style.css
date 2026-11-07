@@ -1,0 +1,7 @@
+/* アプリ全体に効くスタイル（コンポーネント個別のものは各 .vue の <style scoped> に書く） */
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  color: #222;
+  background: #fafafa;
+}
