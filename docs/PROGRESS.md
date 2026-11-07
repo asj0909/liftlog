@@ -18,7 +18,7 @@
 | F-02 カスタム種目の追加・編集・削除 | S-07 | 完了（ウィジェットテストまで。実機・Web での表示確認は未） |
 | 設定・ログアウト | S-08 | 完了 |
 
-MVP の画面はすべて実装済み。Google Play への公開準備中（下の「Play ストア公開」）
+MVP の画面はすべて実装済み。Google Play の内部テストに 1.0.0（versionCode 1）を公開し、実機へのインストールを確認済み（2026-11-05）。製品版の公開は未定（下の「Play ストア公開」）
 
 ## 既知の課題
 
@@ -58,6 +58,7 @@ MVP の画面はすべて実装済み。Google Play への公開準備中（下�
 - パスワード再設定：メールのリンクは GitHub Pages の `site/reset-password.html`（フラグメントの token_hash を、「変更する」を押したときに verifyOtp で確認 → updateUser。開いただけではトークンを使わない）。アプリは PKCE なので、Supabase の既定のリンク（?code=）は Web では使えない。そのため Supabase のメールテンプレートを token_hash 方式に変えている（設定は docs/03_ストア掲載情報.md の「Supabase の認証設定」）。接続先は `site/supabase-config.js`（publishable キーのみ）
 - アプリ内のプライバシーポリシー：ログイン画面の下と設定画面にリンク（Play のユーザーデータ ポリシーで必須）。URL は core/links/external_links.dart、開くのは url_launcher（openUrlProvider でテスト時に差し替え）
 - 新しい個人デベロッパーアカウントは、製品版の前にクローズドテスト（テスター 12 人以上 × 14 日間連続）が必要
+- 現在は個人アカウントの内部テスト（テスターは開発者本人のみ）で運用。Play の「自動保護」は使わない。EU の販売者ステータスは「販売者ではない」（収益化するときは見直す）
 
 ## 開発環境メモ
 
